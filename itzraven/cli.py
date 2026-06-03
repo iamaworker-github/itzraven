@@ -160,7 +160,9 @@ def build_parser() -> argparse.ArgumentParser:
     strix_parser.add_argument("--checkpoint", action="store_true",
                                help="Enable workspace resume with checkpointing")
     strix_parser.add_argument("--temporal", action="store_true",
-                               help="Enable distributed temporal orchestration (requires Redis)")
+                                help="Enable distributed temporal orchestration (requires Redis)")
+    strix_parser.add_argument("--graph", action="store_true",
+                                help="Use LangGraph-powered orchestration (durable execution + conditional routing)")
 
     # ====================================================================
     # Bug Bounty Flags (Dark-Moon style — rich scope definition)
@@ -628,6 +630,7 @@ async def run_scan(
     strict_poc: str = "shadow",
     profile: Optional[str] = None,
     checkpoint: bool = False,
+    graph: bool = False,
     event_bus=None,
     _from_web: bool = False,
     _orchestrator_hook=None,
@@ -674,7 +677,10 @@ async def run_scan(
             _orchestrator_hook(orchestrator)
 
         # Run scan
-        if parallel:
+        if graph and hasattr(orchestrator, 'run_graph'):
+            logger.info("🧠 Running LangGraph-powered orchestration...")
+            result = await orchestrator.run_graph()
+        elif parallel:
             logger.info("Running agents in parallel...")
             result = await orchestrator.run_parallel()
         else:
@@ -966,6 +972,7 @@ def main(argv: list[str] | None = None):
                 strict_poc=args.strict_poc,
                 profile=args.profile,
                 checkpoint=args.checkpoint,
+                graph=args.graph,
             )
         )
         return
@@ -1007,6 +1014,7 @@ def main(argv: list[str] | None = None):
                 instruction=instruction,
                 remediation=args.remediation,
                 gating_mode=args.gating_mode,
+                graph=getattr(args, 'graph', False),
             )
         )
         return

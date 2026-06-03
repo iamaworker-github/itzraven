@@ -20,6 +20,7 @@ htmlcov/
 
 # Results
 argus_results/
+itzraven_results/
 *.log
 
 # OS

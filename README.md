@@ -10,36 +10,44 @@
 ```
 
 > **See Everything. Miss Nothing.**
-> Itzraven is an AI-powered autonomous security testing platform with **60+ specialized agents**, **150+ hacking skills**, **swarm intelligence architecture**, **14 AI brain modules**, and self-learning capabilities. It plans, executes, learns, and **thinks like a real penetration tester** — no manual configuration needed.
+> Itzraven is an AI-powered autonomous security testing platform with **60+ specialized agents**, **150+ hacking skills**, **swarm intelligence architecture**, and self-learning capabilities. It plans, executes, learns, and **thinks like a real penetration tester** — no manual configuration needed. **No paid API keys required** — uses OpenCode DeepSeek V4 Flash Free by default.
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
-[![Docker](https://img.shields.io/badge/Docker-Pull-2496ED.svg?logo=docker)](https://hub.docker.com/r/iamaworker-github/itzraven)
 [![GitHub](https://img.shields.io/badge/GitHub-Repo-181717.svg?logo=github)](https://github.com/iamaworker-github/itzraven)
 [![Agents](https://img.shields.io/badge/Agents-60%2B-8957e5)](https://github.com/iamaworker-github/itzraven)
-[![Skills](https://img.shields.io/badge/Skills-150%2B-1f6feb)](https://github.com/iamaworker-github/itzraven)
+[![AI](https://img.shields.io/badge/AI-Free%20Tier-10b981)](https://opencode.ai)
 
 ---
 
 ## Quick Install
+
+### Prerequisites
+- Python 3.11+
+- [Optional] Docker for sandbox execution
+- [Optional] Node.js for frontend development
 
 ### One-line (Linux/macOS)
 ```bash
 curl -fsSL https://raw.githubusercontent.com/iamaworker-github/itzraven/main/install.sh | bash
 ```
 
-### Docker
+### Manual Install
 ```bash
-# Main Itzraven platform
-docker run -d --name itzraven -p 8484:8484 \
-  -e OPENAI_API_KEY="sk-..." \
-  -e ANTHROPIC_API_KEY="sk-ant-..." \
-  iamaworker-github/itzraven:latest
+git clone https://github.com/iamaworker-github/itzraven.git
+cd itzraven
+pip install -e .
+pip install openai  # for built-in LLM support
 
-# CTF solver sandbox (isolated challenge environment)
-docker run -d --name itzraven-ctf-sandbox \
-  iamaworker-github/itzraven-ctf-sandbox:latest
+# Start web dashboard (free AI included)
+OPENCODE_API_KEY="your-key" \
+AI_MODEL="opencode/deepseek-v4-flash-free" \
+USE_DOCKER=false \
+DOCKER_MANDATORY=false \
+itzraven web --port 8484
 ```
+
+> **Get a free OpenCode API key:** Sign up at [opencode.ai](https://opencode.ai) — no credit card needed.
 
 ---
 
@@ -71,22 +79,33 @@ EXPLOIT_RESULT ──► chain agent wakes (threshold: 0.5)
 - **Emergent attack chains** — order emerges from state, not from prescribed phases
 - **Exploration bias** — `--bias high` = aggressive, `--bias low` = conservative
 
-### 2. 🧠 AI Executor Mode (Think → Decide → Execute)
+### 2. 🧠 Sequential Mode (LangGraph Orchestrator)
 ```
-Phase 0: AI Planning ─── TargetProfiler + RL scan strategy
-Phase 1: Reconnaissance ─── AI-selected tools + MCTS prioritization
-Phase 2: Enumeration ─── Smart brute-force + port service enum
-Phase 3: Vulnerability ─── AI agent selection + ReAct loop
-Phase 3.5: ReAct Loop ─── Meta-cognition + self-healing exploits
-Phase 3.6: AI EXECUTOR ─── LLM brain: think→decide→execute→observe
-Phase 4: AI Analysis ─── PoC validation + debate + chain discovery
-Phase 5: Exploitation ─── AI chaining + failover + tool generation
-Phase 6: Reporting ─── Cross-target intel + AI reports
+Phase 0: AI Planning ─── LLM analyzes target, selects optimal agents
+Phase 1: Reconnaissance ─── Port scan (naabu→masscan→nmap), subdomain discovery, WAF detection
+Phase 2: Enumeration ─── Technology fingerprinting, endpoint discovery, Nuclei scanning
+Phase 3: Vulnerability ─── AI-selected agents run based on detected technologies
+Phase 4: AI Analysis ─── Cross-target intelligence, chain discovery, PoC validation
+Phase 5: Reporting ─── Executive summary with actionable findings
 ```
+
+- **StateGraph** with durable SQLite checkpointing — crash recovery built-in
+- **Conditional edges** — routes agents based on detected technologies
+- **Human-in-the-loop** interrupts before analysis & reporting phases
+- **Tool queue scanning** — naabu → masscan → nmap full → nmap stealth (auto-fallback)
 
 ---
 
 ## Features
+
+### 🤖 Zero-Cost AI (Default)
+| Feature | Description |
+|---------|-------------|
+| **OpenCode DeepSeek V4 Flash Free** | Default LLM — completely free, no API key required for basic use |
+| **OpenCode API key** | Optional — register at opencode.ai for enhanced rate limits |
+| **BlockRun Fallback** | Free DeepSeek V4 Flash via BlockRun — no key needed |
+| **LiteLLM Compatible** | Any LiteLLM-supported provider works (OpenAI, Anthropic, Groq, etc.) |
+| **AI Chat** | In-dashboard chat with scan context awareness |
 
 ### 🐝 Swarm Intelligence
 | Feature | Description |
@@ -96,24 +115,6 @@ Phase 6: Reporting ─── Cross-target intel + AI reports
 | **Emergent Scheduler** | No central planner — dispatching emerges from blackboard state |
 | **Exploration Bias** | `--bias low|med|high` — controls aggression vs thoroughness |
 | **Playbook Engine** | YAML playbooks: bug-bounty, external-asm, ci-cd, ctf-solver |
-
-### 🧠 14 AI Brain Modules
-| Module | What it does |
-|--------|-------------|
-| **AI Executor** | Primary decision loop — LLM thinks, decides, commands agents |
-| **Self-Reflection** | Deep root-cause analysis after failures |
-| **Prompt Evolution** | Auto-improves scan prompts from past failures |
-| **Reinforcement Learning** | Q-learning (epsilon-greedy) — learns optimal scan strategies |
-| **Cross-Target Intel** | Learns patterns across targets — "X worked on nginx+php before" |
-| **Target Profiler** | Per-domain fingerprint with cross-session learning |
-| **Vuln Chaining AI** | LLM discovers attack chains from low/medium findings |
-| **Debate Engine** | Multi-agent cross-validation of findings |
-| **Self-Healing Exploits** | Auto-mutates payloads on failure (WAF bypass) |
-| **Tool Generator** | LLM generates + verifies new Python tools on-the-fly |
-| **Failover Engine** | Plan A fails → LLM generates Plans B/C/D |
-| **ReAct v2** | Chain-of-thought + real-time tool execution |
-| **AI False Positive Verifier** | LLM cross-validates findings against request/response |
-| **AI Report Generator** | Executive + technical summaries in natural language |
 
 ### 🔧 Agent Arsenal (60+ Agents)
 | Category | Agents |
@@ -136,38 +137,15 @@ Phase 6: Reporting ─── Cross-target intel + AI reports
 - **Pentesting**: Account takeover, SSRF, SQLi, XSS, JWT, CSRF, XXE, deserialization, file upload, business logic, GraphQL, race conditions, web3, mobile, cloud, AD, IoT
 - **Methodology**: Recon methodology, hunting methodology, report writing, SAST methodology, triage validation, vulnerability classes
 
-### 🌐 MCP Server
-Connect Claude Desktop, Cursor, VS Code Copilot, or any MCP-compatible tool directly to Itzraven:
-```bash
-itzraven mcp serve
-```
-
-**MCP Tools available:**
-| Tool | Description |
-|------|-------------|
-| `run_scan` | Start scan on target |
-| `get_status` | Check scan progress |
-| `bounty_search_programs` | Search HackerOne/Bugcrowd programs |
-| `bounty_submit_report` | Draft/submit bug bounty reports |
-| **`writeup_search`** | Semantic search over prior art writeups (28 vuln classes) |
-| **`writeup_techniques`** | Get exploitation techniques by vuln class |
-| **`writeup_payloads`** | Get payload samples by vuln class |
-| `health_check` | System health and diagnostics |
-
-Then in Claude Desktop config:
-```json
-{
-  "mcpServers": {
-    "itzraven": {
-      "command": "itzraven",
-      "args": ["mcp", "serve"]
-    }
-  }
-}
-```
-
 ### 📊 Web Dashboard
-Real-time scan monitoring with live WebSocket updates, swarm visualization, agent activity feed, and session persistence.
+Real-time scan monitoring with live WebSocket updates. Features:
+- **Live port scanning** — progress shows each tool name (naabu, masscan, nmap)
+- **AI Findings section** — Collapsible, shows AI/LLM-generated findings
+- **Findings section** — Collapsible, shows all tool-generated findings (nuclei, port scans, recon)
+- **Attack Graph** — Visual node/edge representation of scan targets
+- **AI Chat** — Ask questions about scan progress in real-time
+- **Left Panel** — CPU/MEM/Net usage, AI model + provider display
+- **Conditional Stop Button** — Only visible while scan is running
 
 ---
 
@@ -183,17 +161,17 @@ itzraven swarm --target example.com --playbook bug-bounty --bias high
 # Bug bounty full pipeline (7-phase)
 itzraven pipeline --target https://example.com
 
+# Web dashboard
+itzraven web --host 0.0.0.0 --port 8484
+
+# MCP server for Claude/Cursor
+itzraven mcp serve
+
 # List playbooks
 itzraven playbook list
 
 # Run a specific playbook
 itzraven playbook run bug-bounty --target example.com
-
-# MCP server for Claude/Cursor
-itzraven mcp serve
-
-# Web dashboard
-itzraven web --host 0.0.0.0 --port 8484
 ```
 
 ### Swarm Playbooks
@@ -221,29 +199,17 @@ itzraven web --host 0.0.0.0 --port 8484
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `OPENAI_API_KEY` | One required | OpenAI / Azure OpenAI |
-| `ANTHROPIC_API_KEY` | One required | Anthropic Claude |
+| `OPENCODE_API_KEY` | Recommended | OpenCode API key (free at opencode.ai) |
+| `AI_MODEL` | Optional | Default: `opencode/deepseek-v4-flash-free` |
+| `OPENCODE_API_BASE` | Optional | OpenCode API base URL |
+| `OPENAI_API_KEY` | Optional | OpenAI / Azure OpenAI |
+| `ANTHROPIC_API_KEY` | Optional | Anthropic Claude |
 | `GOOGLE_API_KEY` | Optional | Google Gemini |
 | `GROQ_API_KEY` | Optional | Groq (fast inference) |
-| `DEEPSEEK_API_KEY` | Optional | DeepSeek models |
-| `GITHUB_TOKEN` | Optional | For auto PR creation |
-| `CTF_SANDBOX_IMAGE` | Optional | CTF sandbox Docker image name |
-| `CTF_SANDBOX_TIMEOUT` | Optional | CTF solver timeout (default: 1800s) |
+| `USE_DOCKER` | Optional | Set `false` to skip Docker sandbox |
+| `DOCKER_MANDATORY` | Optional | Set `false` to make Docker optional |
 
-Itzraven uses **LiteLLM** — any provider supported by LiteLLM works automatically.
-
----
-
-## Docker Images
-
-| Image | Pull Command | Description |
-|-------|-------------|-------------|
-| **Itzraven Platform** | `docker pull iamaworker-github/itzraven:latest` | Full platform: 60+ agents, web dashboard, MCP, all tools |
-| **CTF Sandbox** | `docker pull iamaworker-github/itzraven-ctf-sandbox:latest` | Isolated CTF solver env: pwntools, radare2, volatility3, angr, z3 |
-
-**Itzraven Platform** includes: Python 3.11, 60+ agents, 150+ skills, 14 AI modules, swarm architecture, MCP server, web dashboard, nmap, pd-httpx, nuclei, naabu, katana, gau, waybackurls.
-
-**CTF Sandbox** includes: pwntools, radare2, GDB, volatility3, foremost, steghide, zsteg, binwalk, ROPgadget, angr, z3-solver, pycryptodome, capstone, unicorn.
+Itzraven uses **OpenCode DeepSeek V4 Flash Free** by default — zero cost, no API key required for basic operation. For production workloads, get a free key at [opencode.ai](https://opencode.ai). LiteLLM is also supported for any provider.
 
 ---
 

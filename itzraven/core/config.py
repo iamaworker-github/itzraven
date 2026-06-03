@@ -113,7 +113,7 @@ class Config:
     # Legacy Itzraven LLM config
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
-    ai_model: str = "gpt-4-turbo-preview"
+    ai_model: str = "opencode/deepseek-v4-flash-free"
 
     max_concurrent_agents: int = 5
     request_timeout: int = 30
@@ -361,6 +361,10 @@ class Config:
     # ---------------------------------------------------------------------
     @property
     def has_ai_enabled(self) -> bool:
+        model = (self.get("ai_model") or "").lower()
+        free_models = {"opencode/deepseek-v4-flash-free", "opencode/mimo-v2.5-free", "blockrun/nvidia/deepseek-v4-flash"}
+        if model in free_models or any(f in model for f in free_models):
+            return True
         return bool(
             self.get("llm_api_key")
             or self.get("openai_api_key")

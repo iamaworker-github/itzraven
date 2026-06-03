@@ -179,12 +179,25 @@ export default function LeftPanel({ agents, cpu, mem, net, tokens, credits, elap
             {llmModel && llmModel !== 'AI OFF' ? 'On' : 'Off'}
           </span>
         </div>
-        <div className="flex justify-between text-[13px]">
+        {llmModel && llmModel !== 'AI OFF' && (() => {
+          const parts = llmModel.split('/');
+          const provider = parts.length > 1 ? parts[0] : '-';
+          const model = parts.length > 1 ? parts.slice(1).join('/') : llmModel;
+          return <>
+            <div className="flex justify-between text-[13px]">
+              <span className="text-zinc-500">Model</span>
+              <span className="text-zinc-300 text-[13px] truncate max-w-[120px] text-right">{model}</span>
+            </div>
+            <div className="flex justify-between text-[13px]">
+              <span className="text-zinc-500">Provider</span>
+              <span className="text-cyan-400 text-[13px] truncate max-w-[120px] text-right">{provider}</span>
+            </div>
+          </>;
+        })()}
+        {(!llmModel || llmModel === 'AI OFF') && <div className="flex justify-between text-[13px]">
           <span className="text-zinc-500">Model</span>
-          <span className="text-zinc-300 text-[13px] truncate max-w-[120px] text-right">
-            {llmModel && llmModel !== 'AI OFF' ? llmModel : '-'}
-          </span>
-        </div>
+          <span className="text-zinc-300 text-[13px] truncate max-w-[120px] text-right">-</span>
+        </div>}
       </div>
     </div>
   );

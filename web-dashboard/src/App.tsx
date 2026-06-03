@@ -49,7 +49,6 @@ export default function App() {
   const handleExport = useCallback(() => {
     const report = {
       target: sim.target,
-      session: sim.sessionId,
       timestamp: new Date().toISOString(),
       findings: sim.findings,
       pipeline: sim.pipelineStages,
@@ -61,7 +60,7 @@ export default function App() {
     a.download = `itzraven-report-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [sim.target, sim.sessionId, sim.findings, sim.pipelineStages]);
+  }, [sim.target, sim.findings, sim.pipelineStages]);
 
   const handleCommand = useCallback(async (cmd: string) => {
     const targetPattern = /^https?:\/\/|^[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}|^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|^[a-zA-Z]:\\|^\.{1,2}\//;
@@ -100,10 +99,6 @@ export default function App() {
     fetch('/api/scan/new', { method: 'POST' }).catch(() => {});
   }, []);
 
-  const handleResumeScan = useCallback(() => {
-    fetch('/api/scan/resume', { method: 'POST' }).catch(() => {});
-  }, []);
-
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); handleStopScan(); }
@@ -116,6 +111,8 @@ export default function App() {
 
   const currentAgent = sim.agents.find((a) => a.status === 'Running') || null;
   const agentDisplayName = currentAgent ? getAgentDisplayName(currentAgent.name) : null;
+
+  const isScanRunning = sim.agentStatus !== 'IDLE' && sim.agentStatus !== 'CANCELLED';
 
   const sessionMetrics = {
     commandsExecuted: sim.commandCount,
@@ -139,7 +136,7 @@ export default function App() {
       `}</style>
 
       <ToastNotification toasts={toasts} onDismiss={dismissToast} />
-      <TopBar elapsed={sim.elapsed} sessionId={sim.sessionId} target={sim.target} depth={scanDepth} incremental={incremental} onStopScan={handleStopScan} onNewScan={handleNewScan} onResumeScan={handleResumeScan} />
+      <TopBar elapsed={sim.elapsed} target={sim.target} depth={scanDepth} incremental={incremental} isScanRunning={isScanRunning} onStopScan={handleStopScan} onNewScan={handleNewScan} />
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <LeftPanel

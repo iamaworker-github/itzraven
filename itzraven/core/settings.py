@@ -27,7 +27,7 @@ class ItzravenSettings(BaseSettings):
 
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
-    ai_model: str = Field("gpt-4-turbo-preview", description="AI model name")
+    ai_model: str = Field("opencode/deepseek-v4-flash-free", description="AI model name")
 
     max_concurrent_agents: int = Field(5, ge=1, le=100, description="Max parallel agents")
     request_timeout: int = Field(30, ge=1, le=300)

@@ -40,7 +40,7 @@ TECH_TEMPLATE_MAP = {
     "aws": ["aws", "s3", "cloudfront"],
 }
 
-DEFAULT_TEMPLATES = []  # Empty = all templates when no AI/tech match
+DEFAULT_TEMPLATES = ["cves", "vulnerabilities", "misconfiguration", "exposed-panels"]
 
 
 class NucleiAgent(BaseAgent):

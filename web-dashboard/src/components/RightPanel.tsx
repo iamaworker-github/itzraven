@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Finding } from '../types';
 import KeyFindings from './KeyFindings';
 import AttackGraph from './AttackGraph';
@@ -30,6 +31,44 @@ interface Props {
   onExport: () => void;
 }
 
+const AI_AGENT_KEYWORDS = ['analysis', 'llm', 'report', 'gpt', 'claude', 'gemini', 'deepseek'];
+
+function isAiFinding(f: Finding): boolean {
+  const agent = (f.agent || '').toLowerCase();
+  return AI_AGENT_KEYWORDS.some(kw => agent.includes(kw));
+}
+
+function CollapsibleSection({ title, count, children, defaultCollapsed = true }: { title: string; count?: number; children: React.ReactNode; defaultCollapsed?: boolean }) {
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  return (
+    <div className="flex flex-col">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-700 shrink-0 cursor-pointer hover:bg-zinc-900" onClick={() => setCollapsed(!collapsed)}>
+        <span className="text-zinc-400 font-mono text-[12px] font-bold uppercase tracking-widest">
+          {title}{count !== undefined ? ` (${count})` : ''}
+        </span>
+        <span className="text-zinc-500 text-[12px] font-mono">{collapsed ? '▶' : '▼'}</span>
+      </div>
+      {!collapsed && <div className="overflow-y-auto">{children}</div>}
+    </div>
+  );
+}
+
+const severityColors: Record<string, string> = {
+  CRITICAL: 'text-red-400 border-red-700',
+  HIGH: 'text-orange-400 border-orange-700',
+  MEDIUM: 'text-yellow-400 border-yellow-700',
+  LOW: 'text-blue-400 border-blue-700',
+  INFO: 'text-zinc-400 border-zinc-700',
+};
+
+const severityDot: Record<string, string> = {
+  CRITICAL: 'bg-red-400',
+  HIGH: 'bg-orange-400',
+  MEDIUM: 'bg-yellow-400',
+  LOW: 'bg-blue-400',
+  INFO: 'bg-zinc-400',
+};
+
 export default function RightPanel({
   target,
   mode,
@@ -48,6 +87,9 @@ export default function RightPanel({
   edges,
   onExport,
 }: Props) {
+  const aiFindings = findings.filter(isAiFinding);
+  const nonAiFindings = findings.filter(f => !isAiFinding(f));
+
   return (
     <div className="w-72 shrink-0 border-l border-zinc-700 bg-zinc-950 flex flex-col overflow-hidden text-xs font-mono">
       {/* Target Overview */}
@@ -75,30 +117,54 @@ export default function RightPanel({
         )}
       </div>
 
-      {/* Recent Discoveries — grows when Attack Graph is collapsed */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2 border-b border-zinc-800">
-        <div className="text-zinc-500 text-[13px] uppercase tracking-widest mb-1">Recent Discoveries</div>
-        {recentDiscoveries.length > 0 ? (
-          recentDiscoveries.map((d, i) => (
-            <div key={i} className="text-zinc-400 text-[13px] truncate">• {d}</div>
+      {/* AI Findings — collapsible, collapsed by default */}
+      <CollapsibleSection title="AI Findings" count={aiFindings.length}>
+        {aiFindings.length > 0 ? (
+          aiFindings.map((f) => (
+            <div key={f.id} className="flex items-start gap-2 px-3 py-1 border-b border-zinc-900 hover:bg-zinc-900/30">
+              <div className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1 ${severityDot[f.severity]}`} />
+              <div className="flex-1 min-w-0">
+                <div className="text-zinc-300 font-mono text-[13px] leading-relaxed">{f.title}</div>
+                <div className="text-zinc-600 font-mono text-[12px]">{f.agent}</div>
+              </div>
+              <span className={`text-[13px] font-bold font-mono border rounded px-1 py-0.5 shrink-0 ${severityColors[f.severity]}`}>
+                {f.severity}
+              </span>
+            </div>
           ))
         ) : (
-          <div className="text-zinc-600 text-[13px] italic">None yet</div>
+          <div className="text-zinc-600 font-mono text-[12px] italic px-3 py-2">No AI findings yet...</div>
         )}
-      </div>
+      </CollapsibleSection>
 
-      {/* Attack Graph — no fixed height, collapses to just header */}
+      {/* Attack Graph */}
       <div className="border-b border-zinc-800 shrink-0">
         <AttackGraph nodes={nodes} edges={edges} />
       </div>
 
-      {/* Findings Filter/Search */}
+      {/* Findings — collapsible, collapsed by default */}
+      <CollapsibleSection title="Findings" count={nonAiFindings.length}>
+        {nonAiFindings.length > 0 ? (
+          nonAiFindings.map((f) => (
+            <div key={f.id} className="flex items-start gap-2 px-3 py-1 border-b border-zinc-900 hover:bg-zinc-900/30">
+              <div className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1 ${severityDot[f.severity]}`} />
+              <div className="flex-1 min-w-0">
+                <div className="text-zinc-300 font-mono text-[13px] leading-relaxed">{f.title}</div>
+                <div className="text-zinc-600 font-mono text-[12px]">{f.agent}</div>
+              </div>
+              <span className={`text-[13px] font-bold font-mono border rounded px-1 py-0.5 shrink-0 ${severityColors[f.severity]}`}>
+                {f.severity}
+              </span>
+            </div>
+          ))
+        ) : (
+          <div className="text-zinc-600 font-mono text-[12px] italic px-3 py-2">No findings yet...</div>
+        )}
+      </CollapsibleSection>
+
+      {/* Findings Search */}
       <div className="border-b border-zinc-800 shrink-0">
         <div className="px-3 py-1.5">
-          <div className="flex items-center gap-1 mb-1">
-            <span className="text-zinc-500 text-[13px] uppercase tracking-widest">Findings</span>
-            <span className="text-zinc-600 text-[11px]">({findings.length})</span>
-          </div>
           <input
             id="findings-search"
             type="text"
@@ -114,16 +180,10 @@ export default function RightPanel({
         </div>
       </div>
 
-      {/* Key Findings + Export */}
-      <div className="min-h-0 border-b border-zinc-800 overflow-hidden flex flex-col" style={{ maxHeight: '160px' }}>
-        <KeyFindings findings={findings} onExport={onExport} />
-      </div>
-
-      {/* Session Metrics — FIX: show real data, hide zeros for commands/data */}
+      {/* Session Metrics */}
       <div className="px-3 py-2 border-b border-zinc-800">
         <div className="text-zinc-500 text-[13px] uppercase tracking-widest mb-1">Session Metrics</div>
         <div className="space-y-0.5">
-          {/* FIX: Hide zeros for commands/data if not yet collected */}
           <MetricRow
             label="Commands Executed"
             value={metrics.commandsExecuted > 0 ? String(metrics.commandsExecuted) : '—'}

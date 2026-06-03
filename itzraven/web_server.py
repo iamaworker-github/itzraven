@@ -21,7 +21,7 @@ from pydantic import BaseModel
 from itzraven.core.logger import get_logger
 from itzraven.core.event_bus import get_event_bus
 from itzraven.core.di_container import get_container
-from itzraven.core.session import SessionManager
+
 from itzraven.agents.orchestrator import AgentOrchestrator
 
 logger = get_logger()
@@ -85,8 +85,6 @@ class DashboardState:
     """Tracks current scan state for WebSocket clients with disk persistence."""
 
     def __init__(self):
-        self.session_mgr: Optional[SessionManager] = None
-        self._session_dirty = False
         self.state: Dict[str, Any] = {
             "cpu": 0,
             "mem": 0,
@@ -148,34 +146,6 @@ class DashboardState:
         if data.get("target") and not self.state.get("nodes"):
             self.state["nodes"] = [{"id": "root", "label": data["target"], "x": 50, "y": 10, "type": "host", "color": "#00ff88"}]
 
-    def _ensure_session(self) -> SessionManager:
-        if self.session_mgr is None:
-            self.session_mgr = SessionManager()
-        return self.session_mgr
-
-    def save_to_session(self):
-        try:
-            sm = self._ensure_session()
-            state = self.state
-            sm.save_session({
-                "findings": state.get("findings", []),
-                "agent_states": {a.get("name", ""): a.get("status", "") for a in state.get("agents", [])},
-                "scan_progress": {
-                    "pipeline": state.get("pipeline", []),
-                    "technologies": state.get("technologies", []),
-                    "discoveries": state.get("discoveries", []),
-                    "nodes": state.get("nodes", []),
-                    "edges": state.get("edges", []),
-                },
-                "chat_history": state.get("chat_history", []),
-                "mode": state.get("mode", ""),
-                "target": state.get("target", ""),
-                "duration": state.get("duration", 0.0),
-            })
-            self._session_dirty = False
-        except Exception as e:
-            logger.debug(f"Session save error: {e}")
-
     def reset(self):
         self.state.update({
             "target": "",
@@ -213,40 +183,6 @@ class DashboardState:
             ],
         })
         self._start_time = time.time()
-
-    def load_from_session(self, session_id: str) -> bool:
-        try:
-            sm = SessionManager()
-            data = sm.load_session(session_id)
-            if not data:
-                return False
-            findings = data.get("findings", [])
-            scan_progress = data.get("scan_progress", {})
-            pipeline = scan_progress.get("pipeline", [])
-            nodes = scan_progress.get("nodes", [])
-            edges = scan_progress.get("edges", [])
-            technologies = scan_progress.get("technologies", [])
-            discoveries = scan_progress.get("discoveries", [])
-            self.state.update({
-                "findings": findings,
-                "findingsCount": len(findings),
-                "pipeline": pipeline,
-                "nodes": nodes,
-                "edges": edges,
-                "technologies": technologies,
-                "technologies_count": len(technologies),
-                "discoveries": discoveries,
-                "mode": data.get("mode", "PENTEST"),
-                "target": data.get("target", ""),
-                "sessionId": session_id,
-                "agentStatus": "IDLE",
-                "chat_history": data.get("chat_history", []),
-            })
-            self.session_mgr = sm
-            return True
-        except Exception as e:
-            logger.debug(f"Session load error: {e}")
-            return False
 
     def get_state(self) -> Dict[str, Any]:
         elapsed = int(time.time() - self._start_time)
@@ -294,7 +230,6 @@ def setup_event_subscriptions():
             "logs": logs[-50:],
             "activities": activities[-30:],
         })
-        dashboard_state._session_dirty = True
         await broadcast_state()
 
     @bus.subscribe("agent.completed")
@@ -316,7 +251,6 @@ def setup_event_subscriptions():
             "logs": logs[-50:],
             "activities": activities[-30:],
         })
-        dashboard_state._session_dirty = True
         await broadcast_state()
 
     @bus.subscribe("agent.failed")
@@ -413,7 +347,6 @@ def setup_event_subscriptions():
             "logs": logs[-50:],
             **tech_update,
         })
-        dashboard_state._session_dirty = True
         await broadcast_state()
 
     @bus.subscribe("agent.progress")
@@ -446,7 +379,7 @@ def setup_event_subscriptions():
         }
         phase_agent_names = {
             "planning": "Plan Agent", "reconnaissance": "Recon Agent",
-            "enumeration": "BackMeUp", "vulnerability": "Vuln Scanner",
+            "enumeration": "BackMeUp Agent", "vulnerability": "Vuln Scanner",
             "ai_analysis": "Analysis Agent", "exploitation": "Exploitation Agent",
             "reporting": "Report Agent",
         }
@@ -516,17 +449,6 @@ async def broadcast_state():
         dashboard_state.clients.discard(d)
 
 
-async def _auto_save_tick():
-    """Periodically save dashboard state to session on disk."""
-    while True:
-        await asyncio.sleep(15)
-        try:
-            if dashboard_state._session_dirty:
-                dashboard_state.save_to_session()
-        except Exception:
-            pass
-
-
 async def _health_tick():
     """Periodically update system health metrics — live data."""
     import psutil
@@ -594,18 +516,6 @@ async def startup():
     await bus.start()
     setup_event_subscriptions()
     asyncio.create_task(_health_tick())
-    asyncio.create_task(_auto_save_tick())
-
-    # Load latest session from disk for persistence across restarts
-    try:
-        latest = SessionManager.get_latest_session()
-        if latest:
-            sid = latest.get("session_id", "")
-            if sid:
-                dashboard_state.load_from_session(sid)
-                logger.info(f"Loaded last session: {sid} ({latest.get('target', 'unknown')})")
-    except Exception as e:
-        logger.debug(f"No previous session to load: {e}")
 
     # Start pending scan if set via CLI itzraven web -t
     if _pending_scan:
@@ -747,21 +657,6 @@ async def _run_scan_task(target: str, mode: str, session_id: str, depth: str = "
         _current_scan_task = None
 
 
-@app.get("/api/scans")
-async def list_scans():
-    sessions = SessionManager.list_sessions()
-    return {"scans": sessions}
-
-
-@app.get("/api/scans/{session_id}")
-async def load_scan(session_id: str):
-    ok = dashboard_state.load_from_session(session_id)
-    if not ok:
-        raise HTTPException(status_code=404, detail="Session not found")
-    await broadcast_state()
-    return {"status": "loaded", "session_id": session_id}
-
-
 @app.post("/api/scan/stop")
 async def stop_scan():
     global _current_orchestrator, _current_scan_task
@@ -865,22 +760,6 @@ async def get_checkpoint():
     if cp:
         return {"status": "found", "checkpoint": cp}
     return {"status": "no_checkpoint"}
-
-
-@app.post("/api/scan/resume")
-async def resume_scan():
-    from itzraven.core.checkpoint_manager import get_checkpoint_manager
-    scan_id = dashboard_state.state.get("sessionId", "")
-    target = dashboard_state.state.get("target", "")
-    mode = dashboard_state.state.get("mode", "pentest").lower()
-    if not scan_id or not target:
-        return {"status": "nothing_to_resume"}
-    mgr = get_checkpoint_manager(scan_id=scan_id, target=target, mode=mode)
-    cp = mgr.resume()
-    if not cp:
-        return {"status": "no_checkpoint"}
-    asyncio.create_task(_run_scan_task(target, mode, scan_id))
-    return {"status": "resumed", "session_id": scan_id}
 
 
 # ---- Health Check / Dry-Run ----
@@ -1023,26 +902,6 @@ async def report_html():
     return HTMLResp(content=html)
 
 
-# ---- Findings Diff ----
-@app.get("/api/findings/diff/{session_a}/{session_b}")
-async def findings_diff(session_a: str, session_b: str):
-    sm = SessionManager()
-    a = sm.load_session(session_a)
-    b = sm.load_session(session_b)
-    if not a or not b:
-        return {"error": "session not found"}
-    a_titles = {f.get("title", f.get("text", "")) for f in a.get("findings", [])}
-    b_titles = {f.get("title", f.get("text", "")) for f in b.get("findings", [])}
-    new_f = b_titles - a_titles
-    fixed_f = a_titles - b_titles
-    return {
-        "session_a": session_a, "session_b": session_b,
-        "new_findings": list(new_f)[:50],
-        "fixed_findings": list(fixed_f)[:50],
-        "total_new": len(new_f), "total_fixed": len(fixed_f),
-    }
-
-
 # ---- Structured Logging ----
 _structured_log: List[Dict[str, Any]] = []
 
@@ -1076,21 +935,32 @@ async def post_chat(req: ChatRequest):
     user_entry = {"role": "user", "text": req.message, "timestamp": datetime.now().isoformat(), "id": uuid.uuid4().hex[:8]}
     chat_history_store.append(user_entry)
     dashboard_state.state.setdefault("chat_history", []).append(user_entry)
-    dashboard_state._session_dirty = True
     try:
         from itzraven.agents.llm_client import LLMClient
         client = LLMClient()
-        system_prompt = "You are Itzraven AI, a cybersecurity assistant powered by the model 'mimo-v2.5-free' via OpenCode API. When asked about your underlying model, mention 'mimo-v2.5-free'. Default intro: 'Hi! Main Itzraven hoon 👋 Tumhara AI-powered cybersecurity assistant. Main reconnaissance, bug hunting, pentesting workflows, code analysis aur security research me help kar sakta hoon. Kya explore karna chahoge?' Be concise in Hinglish."
-        response = await client.generate(req.message, system=system_prompt, max_tokens=500, task="chat")
+        system_prompt = "You are Itzraven AI, a cybersecurity assistant. Be concise in Hinglish."
+        response = await asyncio.wait_for(
+            client.generate(req.message, system=system_prompt, max_tokens=300, task="chat"),
+            timeout=15,
+        )
         reply_text = response.content if hasattr(response, 'content') else str(response)
         if not reply_text or reply_text.strip() == req.message:
-            reply_text = "I'm analyzing the current scan state. For specific findings, check the Findings panel."
+            reply_text = None
+    except asyncio.TimeoutError:
+        reply_text = None
     except Exception:
-        reply_text = "I'm processing your request. Check the scan progress for updates."
+        reply_text = None
+
+    if not reply_text:
+        target = dashboard_state.state.get("target", "")
+        status = dashboard_state.state.get("agentStatus", "IDLE")
+        findings = dashboard_state.state.get("findingsCount", 0)
+        elapsed = dashboard_state.state.get("time", "00:00:00")
+        reply_text = f"Scan status: {status} | Target: {target or '—'} | Findings: {findings} | Time: {elapsed}"
+
     reply_entry = {"role": "assistant", "text": str(reply_text)[:1000], "timestamp": datetime.now().isoformat(), "id": uuid.uuid4().hex[:8]}
     chat_history_store.append(reply_entry)
     dashboard_state.state.setdefault("chat_history", []).append(reply_entry)
-    dashboard_state._session_dirty = True
     return {"reply": reply_entry["text"]}
 
 
