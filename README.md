@@ -15,6 +15,7 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 [![GitHub](https://img.shields.io/badge/GitHub-Repo-181717.svg?logo=github)](https://github.com/iamaworker-github/itzraven)
+[![Docker](https://img.shields.io/badge/Docker-iamaworker135%2Fitzraven-2496ED.svg?logo=docker)](https://hub.docker.com/r/iamaworker135/itzraven)
 [![Agents](https://img.shields.io/badge/Agents-60%2B-8957e5)](https://github.com/iamaworker-github/itzraven)
 [![AI](https://img.shields.io/badge/AI-Free%20Tier-10b981)](https://opencode.ai)
 
@@ -47,7 +48,16 @@ DOCKER_MANDATORY=false \
 itzraven web --port 8484
 ```
 
-> **Get a free OpenCode API key:** Sign up at [opencode.ai](https://opencode.ai) — no credit card needed.
+### Docker
+```bash
+# Pull & run (free AI included - no API key needed)
+docker run -d --name itzraven -p 8484:8484 \
+  -e OPENCODE_API_KEY="your-key" \
+  -e AI_MODEL="opencode/deepseek-v4-flash-free" \
+  iamaworker135/itzraven:latest
+```
+
+> Get a free OpenCode API key at [opencode.ai](https://opencode.ai)
 
 ---
 

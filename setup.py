@@ -51,6 +51,8 @@ setup(
         "pydantic-settings>=2.1.0",
         "opentelemetry-api>=1.22.0",
         "opentelemetry-sdk>=1.22.0",
+        "langgraph>=1.2.0",
+        "langgraph-checkpoint-sqlite>=2.0.0",
     ],
     extras_require={
         "dev": [
