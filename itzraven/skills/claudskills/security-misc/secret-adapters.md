@@ -1,0 +1,24 @@
+---
+name: "secret-adapters"
+description: "Secret management integration (密鑰管理整合). Use when working with HashiCorp Vault, credential management, or secure configuration. Covers secret storage (密鑰儲存), key management (金鑰管理), NestJS integration, "
+category: security
+subcategory: security-misc
+tags: ["type:integration"]
+relevance: 0
+source: ""
+author: ""
+license: ""
+---
+# secret-adapters
+
+
+## Description
+Secret management integration (密鑰管理整合). Use when working with HashiCorp Vault, credential management, or secure configuration. Covers secret storage (密鑰儲存), key management (金鑰管理), NestJS integration, online/offline modes, and automatic token renewal. Keywords: 密鑰, 機密, 金鑰, 秘密管理, secret, vault, credential, key management, HashiCorp, token, 環境變數, configuration
+
+
+## Tags
+type:integration
+
+
+## Relevance Score
+0

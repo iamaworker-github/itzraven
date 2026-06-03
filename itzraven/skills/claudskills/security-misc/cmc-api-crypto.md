@@ -1,0 +1,24 @@
+---
+name: "cmc-api-crypto"
+description: "API reference for CoinMarketCap cryptocurrency endpoints including quotes, listings, OHLCV, trending, and categories. Use this skill whenever the user mentions CMC API, asks how to get crypto data pro"
+category: security
+subcategory: security-misc
+tags: ["type:integration"]
+relevance: 0
+source: ""
+author: ""
+license: ""
+---
+# cmc-api-crypto
+
+
+## Description
+API reference for CoinMarketCap cryptocurrency endpoints including quotes, listings, OHLCV, trending, and categories. Use this skill whenever the user mentions CMC API, asks how to get crypto data programmatically, wants to build price integrations, or needs REST endpoint documentation. This is the go-to reference for any CMC cryptocurrency API question. Trigger: "CMC API", "coinmarketcap api", "crypto price API", "get bitcoin price via API", "/cmc-api-crypto"
+
+
+## Tags
+type:integration
+
+
+## Relevance Score
+0

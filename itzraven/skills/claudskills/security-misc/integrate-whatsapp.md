@@ -1,0 +1,20 @@
+---
+name: "integrate-whatsapp"
+description: "Connect WhatsApp to your product with Kapso: onboard customers with setup links, detect connections, receive events via webhooks, and send messages/templates/media. Also manage WhatsApp Flows (create/"
+category: security
+subcategory: security-misc
+tags: []
+relevance: 0
+source: ""
+author: ""
+license: ""
+---
+# integrate-whatsapp
+
+
+## Description
+Connect WhatsApp to your product with Kapso: onboard customers with setup links, detect connections, receive events via webhooks, and send messages/templates/media. Also manage WhatsApp Flows (create/update/publish, data endpoints, encryption). Use when integrating WhatsApp end-to-end.
+
+
+## Relevance Score
+0

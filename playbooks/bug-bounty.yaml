@@ -1,0 +1,31 @@
+name: bug-bounty
+description: "Optimized for bug bounty programs: fast recon to high-value vulns"
+version: "1.0"
+steps:
+  - name: recon
+    agent: recon_agent
+    trigger_types: ["TARGET_REGISTERED"]
+    min_pheromone: 0.8
+  - name: tech_detect
+    agent: tech_detect_agent
+    trigger_types: ["PORT_OPEN", "HTTP_ENDPOINT"]
+    min_pheromone: 0.3
+  - name: cve_check
+    agent: nuclei_agent
+    trigger_types: ["TECHNOLOGY"]
+    min_pheromone: 0.4
+  - name: web_scan
+    agent: web_agent
+    trigger_types: ["HTTP_ENDPOINT", "CVE_MATCH"]
+    min_pheromone: 0.5
+  - name: exploit
+    agent: exploit_agent
+    trigger_types: ["VULNERABILITY"]
+    min_pheromone: 0.6
+  - name: report
+    agent: report_agent
+    trigger_types: ["CAMPAIGN_COMPLETE"]
+    min_pheromone: 0.9
+config:
+  max_depth: fast
+  budget_minutes: 30

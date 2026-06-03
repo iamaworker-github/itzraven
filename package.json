@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@rcrsr/claude-code-runner": "^0.14.0"
+  }
+}

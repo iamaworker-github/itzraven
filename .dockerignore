@@ -1,0 +1,19 @@
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.git
+.github
+.vscode
+.venv
+venv
+env
+*.egg-info
+dist
+build
+node_modules
+.DS_Store
+argus_results
+web-dashboard/node_modules
+# web-dashboard/dist (built locally)
+*.log

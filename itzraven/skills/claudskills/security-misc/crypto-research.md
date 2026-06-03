@@ -1,0 +1,20 @@
+---
+name: "crypto-research"
+description: "Performs comprehensive due diligence on a cryptocurrency using CoinMarketCap MCP data. Use when users ask about a specific coin beyond just its price. This includes questions like 'what is [coin]', 'i"
+category: security
+subcategory: security-misc
+tags: []
+relevance: 0
+source: ""
+author: ""
+license: "MIT"
+---
+# crypto-research
+
+
+## Description
+Performs comprehensive due diligence on a cryptocurrency using CoinMarketCap MCP data. Use when users ask about a specific coin beyond just its price. This includes questions like "what is [coin]", "is [coin] legit", "analyze [coin]", tokenomics questions, holder distribution, or any request for deep information about a single cryptocurrency. Trigger: "research [coin]", "tell me about [coin]", "should I invest in [coin]", "DYOR [coin]", "is [coin] safe", "/crypto-research"
+
+
+## Relevance Score
+0

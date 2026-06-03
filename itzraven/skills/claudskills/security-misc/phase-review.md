@@ -1,0 +1,28 @@
+---
+name: "phase-review"
+description: "Adaptive post-implementation phase verification through fresh subagents with S/M/L sizing (bug-fix → feature → architecture). Multi-agent pipeline with strict role zoning: Spec + Architecture (паралле"
+category: security
+subcategory: security-misc
+tags: ["ai:agent", "type:review"]
+relevance: 0
+source: "https://github.com/tripinfinite-gif/claude-skill-phase-review/blob/HEAD/skills/phase-review/SKILL.md"
+author: "tripinfinite-gif"
+license: "MIT"
+---
+# phase-review
+
+
+## Description
+Adaptive post-implementation phase verification through fresh subagents with S/M/L sizing (bug-fix → feature → architecture). Multi-agent pipeline with strict role zoning: Spec + Architecture (параллель) → Quality + Security + Forward-Look (параллель) → Adversarial Skeptic → fix → Regression Sweep → final report. Auto-scales 2 → 7 агентов в зависимости от размера фазы, чтобы не жечь токены на тривиальных правках. USE WHEN: an implementation phase is done and needs validation before moving to the next phase. Trigger phrases (RU/EN): «ревью фазы», «проверь фазу», «валидация фазы», «проверь что написал», «фаза готова», «phase review», «review phase», «verify phase», «validate phase». NOT for: PR/diff review (use differential-review), generic code review (use code-review-skill). Includes built-in security audit, architecture invariants check, forward-look stress test, adversarial paranoia filter, and post-fix regression sweep — отдельный security-review запускать не нужно. Integrates as Шаг 7 (Review) внутри Bulletproof. Specifically for: post-phase verification in multi-phase implementation plans (MASTER-PLAN.md, bulletproof workflow, SPARC phases). Based on Superpowers methodology (obra/superpowers) + multi-agent zoning + adaptive sizing.
+
+
+## Tags
+ai:agent, type:review
+
+
+## Source
+https://github.com/tripinfinite-gif/claude-skill-phase-review/blob/HEAD/skills/phase-review/SKILL.md
+
+
+## Relevance Score
+0

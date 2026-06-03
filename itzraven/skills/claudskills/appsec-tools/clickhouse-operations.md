@@ -1,0 +1,24 @@
+---
+name: "clickhouse-operations"
+description: "Complete ClickHouse operations guide for DevOps and SRE teams managing production deployments. Provides practical guidance on monitoring essential metrics (query latency, throughput, memory, disk), in"
+category: appsec
+subcategory: appsec-tools
+tags: ["type:debug"]
+relevance: 1
+source: ""
+author: ""
+license: ""
+---
+# clickhouse-operations
+
+
+## Description
+Complete ClickHouse operations guide for DevOps and SRE teams managing production deployments. Provides practical guidance on monitoring essential metrics (query latency, throughput, memory, disk), introspecting system tables, performance analysis, scaling strategies (vertical and horizontal), backup/disaster recovery, tuning at query/server/table levels, and troubleshooting common issues. Use when diagnosing ClickHouse problems, optimizing performance, planning capacity, setting up monitoring, implementing backups, or managing production clusters. Includes resource management strategies for disk space, connections, and background operations plus production checklists.
+
+
+## Tags
+type:debug
+
+
+## Relevance Score
+1

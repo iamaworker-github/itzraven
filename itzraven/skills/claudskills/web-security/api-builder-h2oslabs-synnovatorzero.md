@@ -1,0 +1,24 @@
+---
+name: "api-builder"
+description: "Generate complete FastAPI backend scaffolds from OpenAPI 3.x specifications. Automatically creates SQLAlchemy models, Pydantic schemas, FastAPI routers, CRUD operations, database migrations, pytest te"
+category: web-security
+subcategory: web-security
+tags: ["lang:python", "lang:typescript", "type:generator"]
+relevance: 1
+source: ""
+author: ""
+license: ""
+---
+# api-builder
+
+
+## Description
+Generate complete FastAPI backend scaffolds from OpenAPI 3.x specifications. Automatically creates SQLAlchemy models, Pydantic schemas, FastAPI routers, CRUD operations, database migrations, pytest tests, and Next.js TypeScript clients. Use when user provides an OpenAPI/OpenSpec file (.yaml/.json) or pastes spec content, and wants to generate API code. Triggers on phrases like "generate API from spec", "build backend from OpenAPI", "create FastAPI from this spec", "implement these endpoints", or when user shares OpenAPI specification files. Supports Python 3.12+, FastAPI, SQLite, SQLAlchemy, Alembic, pytest, and Next.js App Router.
+
+
+## Tags
+lang:python, lang:typescript, type:generator
+
+
+## Relevance Score
+1

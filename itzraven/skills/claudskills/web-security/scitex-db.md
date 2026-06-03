@@ -1,0 +1,24 @@
+---
+name: "scitex-db"
+description: "Relational-DB wrapper for scientific Python — `SQLite3` and `PostgreSQL` classes composed from a dozen shared mixins (connection, transaction, query, schema, index, row/batch ops, import/export, backu"
+category: web-security
+subcategory: web-security
+tags: ["lang:python"]
+relevance: 1
+source: ""
+author: ""
+license: ""
+---
+# scitex-db
+
+
+## Description
+Relational-DB wrapper for scientific Python — `SQLite3` and `PostgreSQL` classes composed from a dozen shared mixins (connection, transaction, query, schema, index, row/batch ops, import/export, backup, blob, maintenance) with first-class numpy `ndarray` BLOB storage, health checks, duplicate removal, and schema inspection. Public API (5 symbols) — `SQLite3(db_path, ...)` (unified SQLite client with `.execute(sql, params)`, pandas `.to_df(table)`, `.save_array(name, arr)` / `.load_array(name)` for compressed-ndarray BLOBs, `.check_health()`, `.inspect()`, context-manager transactions), `PostgreSQL(dsn, ...)` (same surface for Postgres), `delete_duplicates(conn, table, columns=None)` (dedupe rows by column subset), `delete_sqlite3_duplicates(db_path, ...)` (SQLite-specific convenience), `inspect(db)` (dump schema + row counts + index summary). CLI — `scitex-db inspect <db>`, `scitex-db health <db>`. No MCP tools. Drop-in replacement for hand-rolled `sqlite3.connect(...)` wrappers, `psycopg2` boilerplate, storing ndarrays via `pickle.dumps` → `BLOB` (no compression, no typed load), SQLAlchemy Core when you don't need an ORM, and bespoke "find and delete duplicate rows" SQL snippets. Use whenever the user asks to "store numpy arrays in SQLite", "persist experiment results to Postgres", "dedupe rows in a table", "check this SQLite DB is healthy / not corrupt", "inspect the schema of a DB", "save/load compressed ndarrays as BLOBs", or mentions `scitex.db`, `SQLite3` class, numpy BLOB storage.
+
+
+## Tags
+lang:python
+
+
+## Relevance Score
+1

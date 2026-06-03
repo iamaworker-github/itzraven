@@ -1,0 +1,24 @@
+---
+name: "fastmcp-creator"
+description: "Build Model Context Protocol (MCP) servers - comprehensive coverage of generic MCP protocol AND FastMCP framework specialization. Use when creating any MCP server (Python FastMCP preferred, TypeScript"
+category: security
+subcategory: security-misc
+tags: ["lang:typescript", "ai:mcp", "ai:agent"]
+relevance: 0
+source: ""
+author: ""
+license: ""
+---
+# fastmcp-creator
+
+
+## Description
+Build Model Context Protocol (MCP) servers - comprehensive coverage of generic MCP protocol AND FastMCP framework specialization. Use when creating any MCP server (Python FastMCP preferred, TypeScript/Node also covered). Includes agent-centric design principles, evaluation creation, Pydantic/Zod validation, async patterns, STDIO/HTTP/SSE transports, FastMCP Cloud deployment, .mcpb packaging, security patterns, and mid-2025+ community practices. Standalone skill with no external dependencies.
+
+
+## Tags
+lang:typescript, ai:mcp, ai:agent
+
+
+## Relevance Score
+0

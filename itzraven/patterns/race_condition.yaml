@@ -1,0 +1,66 @@
+name: Race Conditions
+description: Race condition vulnerabilities including TOCTOU, concurrent operations,
+  business logic races.
+basic_payloads:
+- Send 50 parallel requests simultaneously
+- Race upload and access operations
+- Concurrent coupon/voucher redemption
+bypass_techniques:
+- name: Upload Race Condition
+  description: Race file validation against access
+  payloads:
+  - Upload malicious file while requesting it
+  - Symlink race during upload processing
+  - Temp file race (phpinfo + LFI technique)
+- name: Payment Race
+  description: Race payment processing
+  payloads:
+  - 50+ parallel purchase requests
+  - Race multiple coupon redemptions
+  - Concurrent balance transfer
+- name: Token Race
+  description: Race token operations
+  payloads:
+  - Concurrent token refresh produces same token
+  - Concurrent OAuth code redemption
+- name: Account Race
+  description: Race account operations
+  payloads:
+  - Concurrent registration of same email
+  - Race email change and password reset
+  - Simultaneous login from multiple locations
+- name: Database Race
+  description: Race database operations
+  payloads:
+  - SELECT + INSERT without transaction
+  - UPDATE race - two users modify same record
+  - Increment race without atomic operation
+- name: API Rate Limit Race
+  description: Race API rate limits
+  payloads:
+  - Race rate limit window reset
+  - Concurrent requests bypass per-second limit
+- name: Cache Race
+  description: Race cache population
+  payloads:
+  - Cache poisoning via concurrent writes
+  - Race cache invalidation
+detection_patterns:
+- race condition
+- TOCTOU
+- time-of-check
+- concurrent
+- parallel
+- simultaneous
+- without transaction
+chain_templates:
+- name: Payment Race -> Double Spend
+  description: Race payment for free items
+  requirements:
+  - payment_endpoint
+  - no_lock
+- name: Upload Race -> RCE
+  description: Race file validation for code execution
+  requirements:
+  - file_upload
+  - temp_file

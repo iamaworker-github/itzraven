@@ -1,0 +1,20 @@
+---
+name: "sql-expert"
+description: "Expert SQL query writing, optimization, and database schema design with support for PostgreSQL, MySQL, SQLite, and SQL Server. Use when working with databases for: (1) Writing complex SQL queries with"
+category: web-security
+subcategory: web-security
+tags: []
+relevance: 1
+source: ""
+author: ""
+license: ""
+---
+# sql-expert
+
+
+## Description
+Expert SQL query writing, optimization, and database schema design with support for PostgreSQL, MySQL, SQLite, and SQL Server. Use when working with databases for: (1) Writing complex SQL queries with joins, subqueries, and window functions, (2) Optimizing slow queries and analyzing execution plans, (3) Designing database schemas with proper normalization, (4) Creating indexes and improving query performance, (5) Writing migrations and handling schema changes, (6) Debugging SQL errors and query issues
+
+
+## Relevance Score
+1

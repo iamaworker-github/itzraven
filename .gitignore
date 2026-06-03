@@ -1,0 +1,52 @@
+# Python
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.whl
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage/
+htmlcov/
+
+# Environment
+.env
+
+# Results
+argus_results/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Node
+node_modules/
+
+# Frontend build output
+web-dashboard/dist/
+
+# Generated data files
+json
+benchmarks/benchmark_results_*.json
+
+# Auto-generated skills
+skills/learned/
+
+# Build artifacts
+argus_security.egg-info/
+
+

@@ -1,0 +1,20 @@
+---
+name: "multi-source-required-for-load-bearing-claims"
+description: "Architecture decisions, security claims, and performance claims must cite at least two independent sources or escalate the gap to the user. A load-bearing claim is one that, if wrong, causes downstrea"
+category: security
+subcategory: security-misc
+tags: []
+relevance: 1
+source: ""
+author: ""
+license: ""
+---
+# multi-source-required-for-load-bearing-claims
+
+
+## Description
+Architecture decisions, security claims, and performance claims must cite at least two independent sources or escalate the gap to the user. A load-bearing claim is one that, if wrong, causes downstream cascade — choosing the wrong session-store changes every middleware that touches the session; picking bcrypt vs argon2 sets a security baseline for every credential write; assuming an O(log n) lookup when the implementation is O(n) breaks every consumer at scale. Silent single-source picks on these claims are the canonical rationalization-trap shape per K2 §3.3 and link to the rationalization-trap-check skill in the knowledge-hygiene plugin (commit b28aa0f). Cites K2 §3.3 (conflict surfacing) and reuses the multi-source-research pipeline. Use when: writing an architectural decision into a spec or design doc, asserting a security primitive selection in code or review, asserting a performance characteristic that downstream consumers will depend on, reviewing a PR whose description or commits introduce a load-bearing assertion, dispatching a subagent that will produce a design doc or ADR. Skip when: the claim is non-load-bearing (typo fix, comment update, docstring rewording), a single authoritative source is genuinely sufficient and explicitly documented as such (e.g., a function's signature read from its own source file via lci_get_context — the source is authoritative because it is the artifact itself), the claim is exploratory and explicitly labeled as a hypothesis rather than a decision.
+
+
+## Relevance Score
+1

